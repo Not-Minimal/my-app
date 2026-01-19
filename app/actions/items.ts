@@ -34,6 +34,8 @@ export async function createItem(data: {
   unitPrice: number;
   category: string;
   link?: string;
+  localPrice?: number;
+  localDescription?: string;
   notes?: string;
 }): Promise<Item> {
   try {
@@ -43,6 +45,8 @@ export async function createItem(data: {
       unitPrice: data.unitPrice,
       category: data.category,
       link: data.link || null,
+      localPrice: data.localPrice || null,
+      localDescription: data.localDescription || null,
       notes: data.notes || null,
     };
 
@@ -64,8 +68,10 @@ export async function updateItem(
     unitPrice?: number;
     category?: string;
     link?: string;
+    localPrice?: number | null;
+    localDescription?: string | null;
     notes?: string;
-  }
+  },
 ): Promise<Item> {
   try {
     const result = await db
@@ -101,6 +107,8 @@ export async function deleteItem(id: number): Promise<void> {
     revalidatePath("/");
   } catch (error) {
     console.error("Error deleting item:", error);
-    throw new Error("Error al eliminar el producto. Verifica que no tenga gastos asociados.");
+    throw new Error(
+      "Error al eliminar el producto. Verifica que no tenga gastos asociados.",
+    );
   }
 }

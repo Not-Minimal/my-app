@@ -1,13 +1,22 @@
-import { pgTable, text, integer, boolean, timestamp, serial } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  serial,
+} from "drizzle-orm/pg-core";
 
 // Tabla de Items (Catálogo de productos)
 export const items = pgTable("items", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  unitPrice: integer("unit_price").notNull(), // Precio en CLP (sin decimales)
+  unitPrice: integer("unit_price").notNull(), // Precio Internet en CLP (sin decimales)
   category: text("category").notNull(), // materiales, muebles, decoracion, etc.
-  link: text("link"),
+  link: text("link"), // Link del producto en internet
+  localPrice: integer("local_price"), // Precio Local (Cañete) en CLP
+  localDescription: text("local_description"), // Descripción/tienda local en Cañete
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -16,7 +25,9 @@ export const items = pgTable("items", {
 // Tabla de Expenses (Gastos)
 export const expenses = pgTable("expenses", {
   id: serial("id").primaryKey(),
-  itemId: integer("item_id").notNull().references(() => items.id),
+  itemId: integer("item_id")
+    .notNull()
+    .references(() => items.id),
   quantity: integer("quantity").notNull().default(1),
   room: text("room").notNull(), // cocina, living, comedor, bano, pieza-grande, etc.
   floor: integer("floor").notNull().default(0), // 0 = general, 1 = piso 1, 2 = piso 2

@@ -182,6 +182,8 @@ export default function Dashboard({
     unitPrice: 0,
     category: "materiales" as ExpenseCategory,
     link: "",
+    localPrice: 0,
+    localDescription: "",
     notes: "",
   });
 
@@ -254,6 +256,8 @@ export default function Dashboard({
           unitPrice: newItem.unitPrice,
           category: newItem.category,
           link: newItem.link || undefined,
+          localPrice: newItem.localPrice || undefined,
+          localDescription: newItem.localDescription || undefined,
           notes: newItem.notes || undefined,
         });
 
@@ -264,6 +268,8 @@ export default function Dashboard({
           unitPrice: 0,
           category: "materiales",
           link: "",
+          localPrice: 0,
+          localDescription: "",
           notes: "",
         });
         setShowAddItemModal(false);
@@ -285,6 +291,8 @@ export default function Dashboard({
           unitPrice: editingItem.unitPrice,
           category: editingItem.category,
           link: editingItem.link || undefined,
+          localPrice: editingItem.localPrice,
+          localDescription: editingItem.localDescription,
           notes: editingItem.notes || undefined,
         });
 
@@ -868,13 +876,68 @@ export default function Dashboard({
                           </div>
 
                           <div className="flex items-center gap-4">
-                            <div className="text-right">
-                              <p className="text-xs text-slate-400">
-                                Precio unitario
-                              </p>
-                              <p className="text-lg font-bold text-slate-800">
-                                {formatCurrency(item.unitPrice)}
-                              </p>
+                            {/* Comparación de precios */}
+                            <div className="flex gap-3">
+                              {/* Precio Internet */}
+                              <div className="text-right">
+                                <p className="text-xs text-blue-500 flex items-center justify-end gap-1">
+                                  🌐 Internet
+                                </p>
+                                <p className="text-lg font-bold text-slate-800">
+                                  {formatCurrency(item.unitPrice)}
+                                </p>
+                              </div>
+
+                              {/* Precio Local Cañete */}
+                              {item.localPrice ? (
+                                <div className="text-right border-l border-slate-200 pl-3">
+                                  <p className="text-xs text-green-600 flex items-center justify-end gap-1">
+                                    🏪 Cañete
+                                  </p>
+                                  <p className="text-lg font-bold text-slate-800">
+                                    {formatCurrency(item.localPrice)}
+                                  </p>
+                                  {item.localDescription && (
+                                    <p className="text-xs text-slate-400 max-w-[120px] truncate">
+                                      {item.localDescription}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-right border-l border-slate-200 pl-3">
+                                  <p className="text-xs text-slate-400">
+                                    🏪 Cañete
+                                  </p>
+                                  <p className="text-sm text-slate-400 italic">
+                                    Sin precio
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Indicador de mejor precio */}
+                              {item.localPrice && (
+                                <div className="flex items-center">
+                                  {item.localPrice < item.unitPrice ? (
+                                    <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium whitespace-nowrap">
+                                      ✓ Cañete -
+                                      {formatCurrency(
+                                        item.unitPrice - item.localPrice,
+                                      )}
+                                    </span>
+                                  ) : item.localPrice > item.unitPrice ? (
+                                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium whitespace-nowrap">
+                                      ✓ Internet -
+                                      {formatCurrency(
+                                        item.localPrice - item.unitPrice,
+                                      )}
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">
+                                      = Igual
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                             <div className="flex gap-1">
                               <button
@@ -1512,28 +1575,107 @@ export default function Dashboard({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Precio Unitario *
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                      $
-                    </span>
+                {/* Sección de Precio Internet */}
+                <div className="bg-blue-50 rounded-lg p-3 space-y-3">
+                  <p className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+                    🌐 Precio Internet
+                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Precio Unitario *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        value={newItem.unitPrice || ""}
+                        onChange={(e) =>
+                          setNewItem({
+                            ...newItem,
+                            unitPrice: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sección de Precio Local Cañete */}
+                <div className="bg-green-50 rounded-lg p-3 space-y-3">
+                  <p className="text-sm font-semibold text-green-700 flex items-center gap-2">
+                    🏪 Precio Local (Cañete)
+                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Precio Local (opcional)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        value={newItem.localPrice || ""}
+                        onChange={(e) =>
+                          setNewItem({
+                            ...newItem,
+                            localPrice: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Tienda/Descripción Local (opcional)
+                    </label>
                     <input
-                      type="number"
-                      value={newItem.unitPrice || ""}
+                      type="text"
+                      value={newItem.localDescription}
                       onChange={(e) =>
                         setNewItem({
                           ...newItem,
-                          unitPrice: parseInt(e.target.value) || 0,
+                          localDescription: e.target.value,
                         })
                       }
-                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      placeholder="Ej: Ferretería Don Juan, Sodimac Cañete"
                     />
                   </div>
                 </div>
+
+                {/* Comparación de precios */}
+                {newItem.unitPrice > 0 && newItem.localPrice > 0 && (
+                  <div className="bg-slate-100 rounded-lg p-3">
+                    <p className="text-sm font-medium text-slate-700 mb-2">
+                      📊 Comparación
+                    </p>
+                    <div className="flex justify-between text-sm">
+                      <span>Diferencia:</span>
+                      <span
+                        className={`font-bold ${
+                          newItem.localPrice < newItem.unitPrice
+                            ? "text-green-600"
+                            : newItem.localPrice > newItem.unitPrice
+                              ? "text-red-600"
+                              : "text-slate-600"
+                        }`}
+                      >
+                        {newItem.localPrice < newItem.unitPrice
+                          ? `Cañete es ${formatCurrency(newItem.unitPrice - newItem.localPrice)} más barato`
+                          : newItem.localPrice > newItem.unitPrice
+                            ? `Internet es ${formatCurrency(newItem.localPrice - newItem.unitPrice)} más barato`
+                            : "Mismo precio"}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -1561,7 +1703,7 @@ export default function Dashboard({
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Link del producto (opcional)
+                    Link del producto Internet (opcional)
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -1666,27 +1808,110 @@ export default function Dashboard({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Precio Unitario *
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                      $
-                    </span>
+                {/* Sección de Precio Internet */}
+                <div className="bg-blue-50 rounded-lg p-3 space-y-3">
+                  <p className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+                    🌐 Precio Internet
+                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Precio Unitario *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        value={editingItem.unitPrice}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            unitPrice: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sección de Precio Local Cañete */}
+                <div className="bg-green-50 rounded-lg p-3 space-y-3">
+                  <p className="text-sm font-semibold text-green-700 flex items-center gap-2">
+                    🏪 Precio Local (Cañete)
+                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Precio Local (opcional)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        value={editingItem.localPrice || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            localPrice: parseInt(e.target.value) || null,
+                          })
+                        }
+                        className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Tienda/Descripción Local (opcional)
+                    </label>
                     <input
-                      type="number"
-                      value={editingItem.unitPrice}
+                      type="text"
+                      value={editingItem.localDescription || ""}
                       onChange={(e) =>
                         setEditingItem({
                           ...editingItem,
-                          unitPrice: parseInt(e.target.value) || 0,
+                          localDescription: e.target.value || null,
                         })
                       }
-                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      placeholder="Ej: Ferretería Don Juan, Sodimac Cañete"
                     />
                   </div>
                 </div>
+
+                {/* Comparación de precios */}
+                {editingItem.unitPrice > 0 &&
+                  (editingItem.localPrice ?? 0) > 0 && (
+                    <div className="bg-slate-100 rounded-lg p-3">
+                      <p className="text-sm font-medium text-slate-700 mb-2">
+                        📊 Comparación
+                      </p>
+                      <div className="flex justify-between text-sm">
+                        <span>Diferencia:</span>
+                        <span
+                          className={`font-bold ${
+                            (editingItem.localPrice ?? 0) <
+                            editingItem.unitPrice
+                              ? "text-green-600"
+                              : (editingItem.localPrice ?? 0) >
+                                  editingItem.unitPrice
+                                ? "text-red-600"
+                                : "text-slate-600"
+                          }`}
+                        >
+                          {(editingItem.localPrice ?? 0) < editingItem.unitPrice
+                            ? `Cañete es ${formatCurrency(editingItem.unitPrice - (editingItem.localPrice ?? 0))} más barato`
+                            : (editingItem.localPrice ?? 0) >
+                                editingItem.unitPrice
+                              ? `Internet es ${formatCurrency((editingItem.localPrice ?? 0) - editingItem.unitPrice)} más barato`
+                              : "Mismo precio"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -1714,7 +1939,7 @@ export default function Dashboard({
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Link del producto (opcional)
+                    Link del producto Internet (opcional)
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
