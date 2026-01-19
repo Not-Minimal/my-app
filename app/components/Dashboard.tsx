@@ -99,7 +99,7 @@ const getTotalPaid = (expenses: DBExpense[], items: DBItem[]): number => {
 const getFloorTotal = (
   expenses: DBExpense[],
   items: DBItem[],
-  floor: number
+  floor: number,
 ): number => {
   return expenses
     .filter((e) => e.floor === floor)
@@ -109,7 +109,7 @@ const getFloorTotal = (
 const getRoomTotal = (
   expenses: DBExpense[],
   items: DBItem[],
-  room: string
+  room: string,
 ): number => {
   return expenses
     .filter((e) => e.room === room)
@@ -119,7 +119,7 @@ const getRoomTotal = (
 const getCategoryTotal = (
   expenses: DBExpense[],
   items: DBItem[],
-  category: string
+  category: string,
 ): number => {
   return expenses
     .filter((e) => {
@@ -132,7 +132,7 @@ const getCategoryTotal = (
 const getContributorPaid = (
   expenses: DBExpense[],
   items: DBItem[],
-  contributorId: string
+  contributorId: string,
 ): number => {
   return expenses
     .filter((e) => e.paid && e.paidBy === contributorId)
@@ -163,7 +163,7 @@ export default function Dashboard({
   const [filterRoom, setFilterRoom] = useState<Room | "all">("all");
   const [filterFloor, setFilterFloor] = useState<Floor | "all">("all");
   const [filterCategory, setFilterCategory] = useState<ExpenseCategory | "all">(
-    "all"
+    "all",
   );
 
   // Modales
@@ -201,11 +201,11 @@ export default function Dashboard({
   const totalBudget = getTotalBudget();
   const totalExpensesAmount = useMemo(
     () => getTotalExpenses(expenses, items),
-    [expenses, items]
+    [expenses, items],
   );
   const totalPaid = useMemo(
     () => getTotalPaid(expenses, items),
-    [expenses, items]
+    [expenses, items],
   );
   const remaining = totalBudget - totalExpensesAmount;
   const usedPercentage = (totalExpensesAmount / totalBudget) * 100;
@@ -232,7 +232,7 @@ export default function Dashboard({
         item.description?.toLowerCase().includes(search) ||
         categoriesConfig[item.category as ExpenseCategory]?.name
           .toLowerCase()
-          .includes(search)
+          .includes(search),
     );
   }, [items, itemSearch]);
 
@@ -302,7 +302,7 @@ export default function Dashboard({
     const hasExpenses = expenses.some((e) => e.itemId === id);
     if (hasExpenses) {
       alert(
-        "No puedes eliminar este item porque hay gastos asociados. Elimina los gastos primero."
+        "No puedes eliminar este item porque hay gastos asociados. Elimina los gastos primero.",
       );
       return;
     }
@@ -592,7 +592,7 @@ export default function Dashboard({
                   const paid = getContributorPaid(
                     expenses,
                     items,
-                    contributor.id
+                    contributor.id,
                   );
                   const percentage =
                     (contributor.contribution / totalBudget) * 100;
@@ -663,7 +663,9 @@ export default function Dashboard({
                     <Layers size={20} className="text-blue-500" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-700">Primer Piso</h4>
+                    <h4 className="font-semibold text-slate-700">
+                      Primer Piso
+                    </h4>
                     <p className="text-xs text-slate-400">
                       Cocina, Living, Comedor, Baño
                     </p>
@@ -717,7 +719,7 @@ export default function Dashboard({
                         </p>
                       </div>
                     );
-                  }
+                  },
                 )}
               </div>
             </div>
@@ -811,7 +813,7 @@ export default function Dashboard({
                 <div className="divide-y divide-slate-100">
                   {filteredItems.map((item) => {
                     const usageCount = expenses.filter(
-                      (e) => e.itemId === item.id
+                      (e) => e.itemId === item.id,
                     ).length;
                     const category = item.category as ExpenseCategory;
                     return (
@@ -934,7 +936,7 @@ export default function Dashboard({
                       setFilterFloor(
                         e.target.value === "all"
                           ? "all"
-                          : (Number(e.target.value) as Floor)
+                          : (Number(e.target.value) as Floor),
                       )
                     }
                     className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -948,7 +950,7 @@ export default function Dashboard({
                     value={filterCategory}
                     onChange={(e) =>
                       setFilterCategory(
-                        e.target.value as ExpenseCategory | "all"
+                        e.target.value as ExpenseCategory | "all",
                       )
                     }
                     className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -959,7 +961,7 @@ export default function Dashboard({
                         <option key={cat} value={cat}>
                           {categoriesConfig[cat].name}
                         </option>
-                      )
+                      ),
                     )}
                   </select>
                 </div>
@@ -1087,7 +1089,7 @@ export default function Dashboard({
                                 onClick={() =>
                                   handleUpdateQuantity(
                                     expense.id,
-                                    expense.quantity - 1
+                                    expense.quantity - 1,
                                   )
                                 }
                                 className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
@@ -1102,7 +1104,7 @@ export default function Dashboard({
                                 onClick={() =>
                                   handleUpdateQuantity(
                                     expense.id,
-                                    expense.quantity + 1
+                                    expense.quantity + 1,
                                   )
                                 }
                                 className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
@@ -1185,8 +1187,8 @@ export default function Dashboard({
                   {formatCurrency(
                     filteredExpenses.reduce(
                       (sum, e) => sum + getExpenseAmount(e, items),
-                      0
-                    )
+                      0,
+                    ),
                   )}
                 </span>
               </div>
@@ -1208,7 +1210,7 @@ export default function Dashboard({
                   .filter((room) => roomsConfig[room].floor === 1)
                   .map((room) => {
                     const roomExpenses = expenses.filter(
-                      (e) => e.room === room
+                      (e) => e.room === room,
                     );
                     const total = getRoomTotal(expenses, items, room);
                     return (
@@ -1232,6 +1234,36 @@ export default function Dashboard({
                         <p className="text-2xl font-bold text-slate-800">
                           {formatCurrency(total)}
                         </p>
+
+                        {/* Lista de items con cantidades */}
+                        {roomExpenses.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-slate-100">
+                            <p className="text-xs text-slate-500 mb-2 font-medium">
+                              Items:
+                            </p>
+                            <div className="space-y-1 max-h-24 overflow-y-auto">
+                              {roomExpenses.map((expense) => {
+                                const item = items.find(
+                                  (i) => i.id === expense.itemId,
+                                );
+                                return (
+                                  <div
+                                    key={expense.id}
+                                    className="flex justify-between text-xs"
+                                  >
+                                    <span className="text-slate-600 truncate flex-1 mr-2">
+                                      {item?.name || "Item desconocido"}
+                                    </span>
+                                    <span className="text-slate-800 font-medium whitespace-nowrap">
+                                      x{expense.quantity}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
                         <div className="mt-3 pt-3 border-t border-slate-100">
                           <div className="flex justify-between text-xs">
                             <span className="text-slate-400">Pagado</span>
@@ -1241,8 +1273,8 @@ export default function Dashboard({
                                   .filter((e) => e.paid)
                                   .reduce(
                                     (s, e) => s + getExpenseAmount(e, items),
-                                    0
-                                  )
+                                    0,
+                                  ),
                               )}
                             </span>
                           </div>
@@ -1254,8 +1286,8 @@ export default function Dashboard({
                                   .filter((e) => !e.paid)
                                   .reduce(
                                     (s, e) => s + getExpenseAmount(e, items),
-                                    0
-                                  )
+                                    0,
+                                  ),
                               )}
                             </span>
                           </div>
@@ -1277,7 +1309,7 @@ export default function Dashboard({
                   .filter((room) => roomsConfig[room].floor === 2)
                   .map((room) => {
                     const roomExpenses = expenses.filter(
-                      (e) => e.room === room
+                      (e) => e.room === room,
                     );
                     const total = getRoomTotal(expenses, items, room);
                     return (
@@ -1301,6 +1333,36 @@ export default function Dashboard({
                         <p className="text-2xl font-bold text-slate-800">
                           {formatCurrency(total)}
                         </p>
+
+                        {/* Lista de items con cantidades */}
+                        {roomExpenses.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-slate-100">
+                            <p className="text-xs text-slate-500 mb-2 font-medium">
+                              Items:
+                            </p>
+                            <div className="space-y-1 max-h-24 overflow-y-auto">
+                              {roomExpenses.map((expense) => {
+                                const item = items.find(
+                                  (i) => i.id === expense.itemId,
+                                );
+                                return (
+                                  <div
+                                    key={expense.id}
+                                    className="flex justify-between text-xs"
+                                  >
+                                    <span className="text-slate-600 truncate flex-1 mr-2">
+                                      {item?.name || "Item desconocido"}
+                                    </span>
+                                    <span className="text-slate-800 font-medium whitespace-nowrap">
+                                      x{expense.quantity}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
                         <div className="mt-3 pt-3 border-t border-slate-100">
                           <div className="flex justify-between text-xs">
                             <span className="text-slate-400">Pagado</span>
@@ -1310,8 +1372,8 @@ export default function Dashboard({
                                   .filter((e) => e.paid)
                                   .reduce(
                                     (s, e) => s + getExpenseAmount(e, items),
-                                    0
-                                  )
+                                    0,
+                                  ),
                               )}
                             </span>
                           </div>
@@ -1323,8 +1385,8 @@ export default function Dashboard({
                                   .filter((e) => !e.paid)
                                   .reduce(
                                     (s, e) => s + getExpenseAmount(e, items),
-                                    0
-                                  )
+                                    0,
+                                  ),
                               )}
                             </span>
                           </div>
@@ -1341,27 +1403,64 @@ export default function Dashboard({
                 <Home size={20} className="text-slate-500" />
                 General / Estructura
               </h3>
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-slate-100 rounded-xl text-slate-500">
-                      <Home size={18} />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-700">
-                        Gastos Generales
-                      </h4>
-                      <p className="text-xs text-slate-400">
-                        {expenses.filter((e) => e.room === "general").length}{" "}
-                        gastos
+              {(() => {
+                const generalExpenses = expenses.filter(
+                  (e) => e.room === "general",
+                );
+                return (
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-slate-100 rounded-xl text-slate-500">
+                          <Home size={18} />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-700">
+                            Gastos Generales
+                          </h4>
+                          <p className="text-xs text-slate-400">
+                            {generalExpenses.length} gastos
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-2xl font-bold text-slate-800">
+                        {formatCurrency(
+                          getRoomTotal(expenses, items, "general"),
+                        )}
                       </p>
                     </div>
+
+                    {/* Lista de items con cantidades */}
+                    {generalExpenses.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <p className="text-xs text-slate-500 mb-2 font-medium">
+                          Items:
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                          {generalExpenses.map((expense) => {
+                            const item = items.find(
+                              (i) => i.id === expense.itemId,
+                            );
+                            return (
+                              <div
+                                key={expense.id}
+                                className="flex justify-between text-xs bg-slate-50 rounded-lg px-2 py-1"
+                              >
+                                <span className="text-slate-600 truncate flex-1 mr-2">
+                                  {item?.name || "Item desconocido"}
+                                </span>
+                                <span className="text-slate-800 font-medium whitespace-nowrap">
+                                  x{expense.quantity}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {formatCurrency(getRoomTotal(expenses, items, "general"))}
-                  </p>
-                </div>
-              </div>
+                );
+              })()}
             </div>
           </>
         )}
@@ -1455,7 +1554,7 @@ export default function Dashboard({
                         <option key={cat} value={cat}>
                           {categoriesConfig[cat].name}
                         </option>
-                      )
+                      ),
                     )}
                   </select>
                 </div>
@@ -1608,7 +1707,7 @@ export default function Dashboard({
                         <option key={cat} value={cat}>
                           {categoriesConfig[cat].name}
                         </option>
-                      )
+                      ),
                     )}
                   </select>
                 </div>
@@ -1677,7 +1776,9 @@ export default function Dashboard({
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
               <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-800">Nuevo Gasto</h3>
+                <h3 className="text-lg font-bold text-slate-800">
+                  Nuevo Gasto
+                </h3>
                 <button
                   onClick={() => setShowAddExpenseModal(false)}
                   className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -1730,11 +1831,10 @@ export default function Dashboard({
                   <div className="bg-blue-50 rounded-lg p-3">
                     {(() => {
                       const selectedItem = items.find(
-                        (i) => i.id === newExpense.itemId
+                        (i) => i.id === newExpense.itemId,
                       );
                       if (!selectedItem) return null;
-                      const category =
-                        selectedItem.category as ExpenseCategory;
+                      const category = selectedItem.category as ExpenseCategory;
                       return (
                         <div className="flex justify-between items-center">
                           <div>
@@ -1782,7 +1882,7 @@ export default function Dashboard({
                       <span className="text-xl font-bold text-green-600">
                         {formatCurrency(
                           (items.find((i) => i.id === newExpense.itemId)
-                            ?.unitPrice || 0) * newExpense.quantity
+                            ?.unitPrice || 0) * newExpense.quantity,
                         )}
                       </span>
                     </div>
