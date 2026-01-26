@@ -5,6 +5,7 @@ import {
   boolean,
   timestamp,
   serial,
+  real,
 } from "drizzle-orm/pg-core";
 
 // Tabla de Items (Catálogo de productos)
@@ -44,3 +45,23 @@ export type Item = typeof items.$inferSelect;
 export type NewItem = typeof items.$inferInsert;
 export type Expense = typeof expenses.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
+
+// Tabla de Volcanita Calculations (Cubicación de Volcanita)
+export const volcanitaCalculations = pgTable("volcanita_calculations", {
+  id: serial("id").primaryKey(),
+  habitacion: text("habitacion").notNull(), // Nombre de la habitación
+  tipoSuperficie: text("tipo_superficie").notNull(), // Pared o Cielo
+  orientacion: text("orientacion").notNull(), // Norte, Sur, Este, Oeste, Horizontal
+  ancho: real("ancho").notNull(), // Ancho en metros
+  alto: real("alto").notNull(), // Alto en metros
+  anchoVentana: real("ancho_ventana").notNull().default(0), // Ancho de ventana en metros
+  altoVentana: real("alto_ventana").notNull().default(0), // Alto de ventana en metros
+  tipoVolcanita: text("tipo_volcanita").notNull(), // ST_CIELO, ST_TABIQUE, RH, RF, ACU
+  areaNeto: real("area_neto").notNull(), // Área calculada en m²
+  planchasRequeridas: integer("planchas_requeridas").notNull(), // Cantidad de planchas
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type VolcanitaCalculation = typeof volcanitaCalculations.$inferSelect;
+export type NewVolcanitaCalculation = typeof volcanitaCalculations.$inferInsert;
