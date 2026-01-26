@@ -50,6 +50,7 @@ export type NewExpense = typeof expenses.$inferInsert;
 export const volcanitaCalculations = pgTable("volcanita_calculations", {
   id: serial("id").primaryKey(),
   habitacion: text("habitacion").notNull(), // Nombre de la habitación
+  floor: integer("floor").notNull().default(1), // 1 = piso 1, 2 = piso 2
   tipoSuperficie: text("tipo_superficie").notNull(), // Pared o Cielo
   orientacion: text("orientacion").notNull(), // Norte, Sur, Este, Oeste, Horizontal
   ancho: real("ancho").notNull(), // Ancho en metros

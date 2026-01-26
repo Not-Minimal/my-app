@@ -8,6 +8,13 @@
       "when": 1769385591490,
       "tag": "0000_smooth_loki",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769386889186,
+      "tag": "0001_stormy_alex_wilder",
+      "breakpoints": true
     }
   ]
 }

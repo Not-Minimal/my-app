@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
-import { Plus, Trash2, Calculator, Info, RotateCcw, Loader2 } from "lucide-react";
+import React, { useState, useTransition, useMemo } from "react";
+import { Plus, Trash2, Calculator, Info, Loader2, Layers, Copy, Check, FileText } from "lucide-react";
 import type { VolcanitaCalculation } from "@/app/db/schema";
 import {
   createVolcanitaCalculation,
@@ -26,6 +26,8 @@ interface VolcanitaTabProps {
 export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps) {
   const [calculations, setCalculations] = useState<VolcanitaCalculation[]>(initialCalculations);
   const [isPending, startTransition] = useTransition();
+  const [copiedSimple, setCopiedSimple] = useState(false);
+  const [copiedDetailed, setCopiedDetailed] = useState(false);
 
   const calculateArea = (row: VolcanitaCalculation) => {
     const wallArea = row.ancho * row.alto;
@@ -33,21 +35,60 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
     return Math.max(0, wallArea - windowArea);
   };
 
-  const totals = calculations.reduce(
-    (acc, row) => {
+  // Calcular totales por piso
+  const floorTotals = useMemo(() => {
+    const floor1 = calculations.filter((c) => c.floor === 1);
+    const floor2 = calculations.filter((c) => c.floor === 2);
+
+    const calcFloorTotal = (rows: VolcanitaCalculation[]) => {
+      return rows.reduce(
+        (acc, row) => {
+          const area = calculateArea(row);
+          acc.area += area;
+          acc.boards += Math.ceil(area / BOARD_AREA);
+          return acc;
+        },
+        { area: 0, boards: 0 }
+      );
+    };
+
+    return {
+      floor1: calcFloorTotal(floor1),
+      floor2: calcFloorTotal(floor2),
+      total: calcFloorTotal(calculations),
+    };
+  }, [calculations]);
+
+  // Calcular totales por tipo de volcanita
+  const typeTotals = useMemo(() => {
+    const totals: Record<string, { area: number; boards: number; floor1: number; floor2: number }> = {};
+
+    VOLCANITA_TYPES.forEach((type) => {
+      totals[type.id] = { area: 0, boards: 0, floor1: 0, floor2: 0 };
+    });
+
+    calculations.forEach((row) => {
       const area = calculateArea(row);
-      const boards = area / BOARD_AREA;
-      acc.totalArea += area;
-      acc.totalBoards += Math.ceil(boards);
-      return acc;
-    },
-    { totalArea: 0, totalBoards: 0 }
-  );
+      const boards = Math.ceil(area / BOARD_AREA);
+      if (totals[row.tipoVolcanita]) {
+        totals[row.tipoVolcanita].area += area;
+        totals[row.tipoVolcanita].boards += boards;
+        if (row.floor === 1) {
+          totals[row.tipoVolcanita].floor1 += boards;
+        } else if (row.floor === 2) {
+          totals[row.tipoVolcanita].floor2 += boards;
+        }
+      }
+    });
+
+    return totals;
+  }, [calculations]);
 
   const addRow = () => {
     startTransition(async () => {
       const newRow = await createVolcanitaCalculation({
         habitacion: "",
+        floor: 1,
         tipoSuperficie: "Pared",
         orientacion: "Norte",
         ancho: 0,
@@ -61,12 +102,10 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
   };
 
   const removeRow = (id: number) => {
-    if (calculations.length > 1) {
-      startTransition(async () => {
-        await deleteVolcanitaCalculation(id);
-        setCalculations(calculations.filter((row) => row.id !== id));
-      });
-    }
+    startTransition(async () => {
+      await deleteVolcanitaCalculation(id);
+      setCalculations(calculations.filter((row) => row.id !== id));
+    });
   };
 
   const updateRow = (id: number, field: string, value: string | number) => {
@@ -82,53 +121,229 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
     });
   };
 
+  // Función para copiar resumen simple
+  const copySimpleSummary = async () => {
+    const types = VOLCANITA_TYPES.filter((type) => typeTotals[type.id].boards > 0);
+    
+    let text = "📋 PEDIDO DE VOLCANITA\n";
+    text += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    
+    types.forEach((type) => {
+      const total = typeTotals[type.id];
+      text += `${type.name} (${type.thickness})\n`;
+      text += `  → ${total.boards} planchas\n\n`;
+    });
+    
+    text += "━━━━━━━━━━━━━━━━━━━━━━\n";
+    text += `TOTAL: ${floorTotals.total.boards} planchas\n`;
+    text += `Área total: ${floorTotals.total.area.toFixed(2)} m²`;
+
+    await navigator.clipboard.writeText(text);
+    setCopiedSimple(true);
+    setTimeout(() => setCopiedSimple(false), 2000);
+  };
+
+  // Función para copiar resumen detallado
+  const copyDetailedSummary = async () => {
+    const types = VOLCANITA_TYPES.filter((type) => typeTotals[type.id].boards > 0);
+    
+    let text = "📋 PEDIDO DE VOLCANITA - DETALLADO\n";
+    text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    
+    text += "📊 RESUMEN POR PISO:\n";
+    text += `  • Primer Piso: ${floorTotals.floor1.boards} planchas (${floorTotals.floor1.area.toFixed(2)} m²)\n`;
+    text += `  • Segundo Piso: ${floorTotals.floor2.boards} planchas (${floorTotals.floor2.area.toFixed(2)} m²)\n\n`;
+    
+    text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    text += "📦 DETALLE POR TIPO:\n\n";
+    
+    types.forEach((type) => {
+      const total = typeTotals[type.id];
+      text += `${type.name}\n`;
+      text += `  Espesor: ${type.thickness}\n`;
+      text += `  Uso: ${type.usage}\n`;
+      text += `  Total: ${total.boards} planchas (${total.area.toFixed(2)} m²)\n`;
+      text += `    - Piso 1: ${total.floor1} planchas\n`;
+      text += `    - Piso 2: ${total.floor2} planchas\n\n`;
+    });
+    
+    text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    text += "📍 RESUMEN DE ÁREAS:\n";
+    
+    calculations.forEach((calc) => {
+      const area = calculateArea(calc);
+      const boards = Math.ceil(area / BOARD_AREA);
+      const type = VOLCANITA_TYPES.find((t) => t.id === calc.tipoVolcanita);
+      text += `  • ${calc.habitacion || 'Sin nombre'} (Piso ${calc.floor})\n`;
+      text += `    ${calc.tipoSuperficie} ${calc.orientacion} - ${type?.name}\n`;
+      text += `    ${calc.ancho}m × ${calc.alto}m = ${area.toFixed(2)} m² → ${boards} planchas\n\n`;
+    });
+    
+    text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    text += `TOTAL GENERAL: ${floorTotals.total.boards} planchas\n`;
+    text += `Área total cubierta: ${floorTotals.total.area.toFixed(2)} m²\n`;
+    text += `Planchas de 1.2m × 2.4m (${BOARD_AREA} m² c/u)`;
+
+    await navigator.clipboard.writeText(text);
+    setCopiedDetailed(true);
+    setTimeout(() => setCopiedDetailed(false), 2000);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header con totales generales */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              <Calculator className="text-blue-600" />
-              Cubicación de Volcanita
-            </h2>
-            <p className="text-slate-500 text-sm">
-              Cálculo de materiales basado en planchas de 1.2m x 2.4m (2.88 m²)
-            </p>
-          </div>
-          <div className="flex gap-4 bg-slate-100 p-4 rounded-lg">
-            <div className="text-center px-4 border-r border-slate-300">
-              <p className="text-xs text-slate-500 uppercase font-bold">Área Total</p>
-              <p className="text-xl font-bold text-blue-700">{totals.totalArea.toFixed(2)} m²</p>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <Calculator className="text-blue-600" />
+                Cubicación de Volcanita
+              </h2>
+              <p className="text-slate-500 text-sm">
+                Cálculo de materiales basado en planchas de 1.2m x 2.4m (2.88 m²)
+              </p>
             </div>
-            <div className="text-center px-4">
-              <p className="text-xs text-slate-500 uppercase font-bold">Total Planchas</p>
-              <p className="text-xl font-bold text-blue-700">{totals.totalBoards} un.</p>
+            
+            {/* Botones de copiar */}
+            <div className="flex gap-2">
+              <button
+                onClick={copySimpleSummary}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm"
+              >
+                {copiedSimple ? (
+                  <>
+                    <Check size={16} />
+                    Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} />
+                    Copiar Resumen
+                  </>
+                )}
+              </button>
+              <button
+                onClick={copyDetailedSummary}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm"
+              >
+                {copiedDetailed ? (
+                  <>
+                    <Check size={16} />
+                    Copiado!
+                  </>
+                ) : (
+                  <>
+                    <FileText size={16} />
+                    Copiar Detallado
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Totales por piso */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Piso 1 */}
+            <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Layers size={18} className="text-blue-600" />
+                <h3 className="text-sm font-bold text-blue-900 uppercase">Primer Piso</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-blue-600">Área</p>
+                  <p className="text-lg font-bold text-blue-900">{floorTotals.floor1.area.toFixed(2)} m²</p>
+                </div>
+                <div>
+                  <p className="text-xs text-blue-600">Planchas</p>
+                  <p className="text-lg font-bold text-blue-900">{floorTotals.floor1.boards} un.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Piso 2 */}
+            <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Layers size={18} className="text-purple-600" />
+                <h3 className="text-sm font-bold text-purple-900 uppercase">Segundo Piso</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-purple-600">Área</p>
+                  <p className="text-lg font-bold text-purple-900">{floorTotals.floor2.area.toFixed(2)} m²</p>
+                </div>
+                <div>
+                  <p className="text-xs text-purple-600">Planchas</p>
+                  <p className="text-lg font-bold text-purple-900">{floorTotals.floor2.boards} un.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Total */}
+            <div className="bg-slate-100 p-4 rounded-lg border-2 border-slate-300">
+              <div className="flex items-center gap-2 mb-2">
+                <Calculator size={18} className="text-slate-700" />
+                <h3 className="text-sm font-bold text-slate-800 uppercase">Total General</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-slate-600">Área</p>
+                  <p className="text-lg font-bold text-slate-900">{floorTotals.total.area.toFixed(2)} m²</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600">Planchas</p>
+                  <p className="text-lg font-bold text-slate-900">{floorTotals.total.boards} un.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-        {VOLCANITA_TYPES.map((type) => (
-          <div
-            key={type.id}
-            className={`${type.color} text-white p-3 rounded-lg text-xs shadow-sm`}
-          >
-            <p className="font-bold">{type.name}</p>
-            <p className="opacity-80">{type.thickness}</p>
-            <p className="mt-1 font-medium italic">{type.usage}</p>
-          </div>
-        ))}
+      {/* Totales por tipo de volcanita */}
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
+        <h3 className="text-lg font-bold text-slate-900 mb-4">Resumen por Tipo de Volcanita</h3>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          {VOLCANITA_TYPES.map((type) => {
+            const total = typeTotals[type.id];
+            return (
+              <div
+                key={type.id}
+                className={`${type.color} text-white p-4 rounded-lg shadow-sm`}
+              >
+                <p className="font-bold text-sm mb-1">{type.name}</p>
+                <p className="text-xs opacity-80 mb-3">{type.thickness}</p>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="opacity-80">Total:</span>
+                    <span className="font-bold">{total.boards} un.</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="opacity-80">Piso 1:</span>
+                    <span className="font-medium">{total.floor1} un.</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="opacity-80">Piso 2:</span>
+                    <span className="font-medium">{total.floor2} un.</span>
+                  </div>
+                  <div className="pt-1 border-t border-white/20">
+                    <span className="opacity-80">{total.area.toFixed(2)} m²</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Spreadsheet Table */}
+      {/* Tabla de cálculos */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-800 text-white text-xs uppercase tracking-wider">
               <tr>
+                <th className="p-4 border-b border-slate-700">Piso</th>
                 <th className="p-4 border-b border-slate-700">Habitación</th>
                 <th className="p-4 border-b border-slate-700">Superficie</th>
                 <th className="p-4 border-b border-slate-700">Orientación</th>
@@ -153,7 +368,26 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                 const selectedType = VOLCANITA_TYPES.find((t) => t.id === row.tipoVolcanita);
 
                 return (
-                  <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                  <tr
+                    key={row.id}
+                    className={`hover:bg-slate-50 transition-colors ${
+                      row.floor === 1 ? "bg-blue-50/30" : "bg-purple-50/30"
+                    }`}
+                  >
+                    <td className="p-3">
+                      <select
+                        className={`outline-none cursor-pointer font-medium px-2 py-1 rounded ${
+                          row.floor === 1
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-purple-100 text-purple-700"
+                        }`}
+                        value={row.floor}
+                        onChange={(e) => updateRow(row.id, "floor", parseInt(e.target.value))}
+                      >
+                        <option value={1}>Piso 1</option>
+                        <option value={2}>Piso 2</option>
+                      </select>
+                    </td>
                     <td className="p-3">
                       <input
                         type="text"
@@ -248,7 +482,7 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                           ))}
                         </select>
                         <span className="text-[10px] text-slate-500 px-1 rounded bg-slate-100 w-fit">
-                          Espesor: {selectedType?.thickness}
+                          {selectedType?.thickness}
                         </span>
                       </div>
                     </td>

@@ -1,0 +1,1 @@
+ALTER TABLE "volcanita_calculations" ADD COLUMN "floor" integer DEFAULT 1 NOT NULL;
