@@ -26,6 +26,7 @@ const VOLCANITA_TYPES = [
     thickness: "8mm / 10mm",
     color: "bg-blue-400",
     usage: "Cielo",
+    precioM2: 5000,
   },
   {
     id: "ST_TABIQUE",
@@ -33,6 +34,7 @@ const VOLCANITA_TYPES = [
     thickness: "15mm",
     color: "bg-blue-900",
     usage: "Tabique",
+    precioM2: 6500,
   },
   {
     id: "RH",
@@ -40,6 +42,7 @@ const VOLCANITA_TYPES = [
     thickness: "12.5mm",
     color: "bg-emerald-800",
     usage: "Baño y Cocina",
+    precioM2: 7500,
   },
   {
     id: "RF",
@@ -47,6 +50,7 @@ const VOLCANITA_TYPES = [
     thickness: "12.5mm",
     color: "bg-red-700",
     usage: "Muro Cortafuego",
+    precioM2: 8500,
   },
   {
     id: "ACU",
@@ -54,6 +58,7 @@ const VOLCANITA_TYPES = [
     thickness: "10mm",
     color: "bg-purple-800",
     usage: "Reducción de Ruido",
+    precioM2: 9000,
   },
 ];
 
@@ -71,6 +76,15 @@ export default function VolcanitaTab({
   const [isPending, startTransition] = useTransition();
   const [copiedSimple, setCopiedSimple] = useState(false);
   const [copiedDetailed, setCopiedDetailed] = useState(false);
+
+  // Estados para precios editables
+  const [prices, setPrices] = useState({
+    ST_CIELO: 5000,
+    ST_TABIQUE: 6500,
+    RH: 7500,
+    RF: 8500,
+    ACU: 9000,
+  });
 
   const calculateArea = (row: VolcanitaCalculation) => {
     const wallArea = row.ancho * row.alto;
@@ -177,15 +191,24 @@ export default function VolcanitaTab({
     let text = "📋 PEDIDO DE VOLCANITA\n";
     text += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
 
+    let totalGeneral = 0;
+
     types.forEach((type) => {
       const total = typeTotals[type.id];
+      const precio = prices[type.id as keyof typeof prices];
+      const precioTotal = Math.round(total.area * precio);
+      totalGeneral += precioTotal;
+
       text += `${type.name} (${type.thickness})\n`;
-      text += `  → ${total.boards} planchas\n\n`;
+      text += `  → ${total.boards} planchas (${total.area.toFixed(2)} m²)\n`;
+      text += `  → $${precio.toLocaleString("es-CL")}/m²\n`;
+      text += `  → Subtotal: $${precioTotal.toLocaleString("es-CL")}\n\n`;
     });
 
     text += "━━━━━━━━━━━━━━━━━━━━━━\n";
     text += `TOTAL: ${floorTotals.total.boards} planchas\n`;
-    text += `Área total: ${floorTotals.total.area.toFixed(2)} m²`;
+    text += `ÁREA TOTAL: ${floorTotals.total.area.toFixed(2)} m²\n`;
+    text += `PRECIO TOTAL: $${totalGeneral.toLocaleString("es-CL")}`;
 
     await navigator.clipboard.writeText(text);
     setCopiedSimple(true);
@@ -208,12 +231,20 @@ export default function VolcanitaTab({
     text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
     text += "📦 DETALLE POR TIPO:\n\n";
 
+    let totalGeneral = 0;
+
     types.forEach((type) => {
       const total = typeTotals[type.id];
+      const precio = prices[type.id as keyof typeof prices];
+      const precioTotal = Math.round(total.area * precio);
+      totalGeneral += precioTotal;
+
       text += `${type.name}\n`;
-      text += `  Espesor: ${type.thickness}\n`;
+      text += `  Grosor: ${type.thickness}\n`;
       text += `  Uso: ${type.usage}\n`;
       text += `  Total: ${total.boards} planchas (${total.area.toFixed(2)} m²)\n`;
+      text += `  Precio: $${precio.toLocaleString("es-CL")}/m²\n`;
+      text += `  Subtotal: $${precioTotal.toLocaleString("es-CL")}\n`;
       text += `    - Piso 1: ${total.floor1} planchas\n`;
       text += `    - Piso 2: ${total.floor2} planchas\n\n`;
     });
@@ -230,10 +261,12 @@ export default function VolcanitaTab({
       text += `    ${calc.ancho}m × ${calc.alto}m = ${area.toFixed(2)} m² → ${boards} planchas\n\n`;
     });
 
-    text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    text += `TOTAL GENERAL: ${floorTotals.total.boards} planchas\n`;
-    text += `Área total cubierta: ${floorTotals.total.area.toFixed(2)} m²\n`;
-    text += `Planchas de 1.2m × 2.4m (${BOARD_AREA} m² c/u)`;
+    text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    text += "💰 RESUMEN FINANCIERO:\n";
+    text += `  TOTAL: ${floorTotals.total.boards} planchas\n`;
+    text += `  Área total: ${floorTotals.total.area.toFixed(2)} m²\n`;
+    text += `  PRECIO TOTAL: $${totalGeneral.toLocaleString("es-CL")}\n`;
+    text += `  Planchas de 1.2m × 2.4m (${BOARD_AREA} m² c/u)`;
 
     await navigator.clipboard.writeText(text);
     setCopiedDetailed(true);
@@ -242,6 +275,120 @@ export default function VolcanitaTab({
 
   return (
     <div className="space-y-6">
+      {/* Configuración de Precios */}
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
+        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+          💰 Configuración de Precios por m²
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              ST Cielo (8mm/10mm)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                $
+              </span>
+              <input
+                type="number"
+                value={prices.ST_CIELO}
+                onChange={(e) =>
+                  setPrices({
+                    ...prices,
+                    ST_CIELO: Number(e.target.value),
+                  })
+                }
+                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              ST Tabique (15mm)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                $
+              </span>
+              <input
+                type="number"
+                value={prices.ST_TABIQUE}
+                onChange={(e) =>
+                  setPrices({
+                    ...prices,
+                    ST_TABIQUE: Number(e.target.value),
+                  })
+                }
+                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              RH Humedad (12.5mm)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                $
+              </span>
+              <input
+                type="number"
+                value={prices.RH}
+                onChange={(e) =>
+                  setPrices({
+                    ...prices,
+                    RH: Number(e.target.value),
+                  })
+                }
+                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-800 focus:border-emerald-800"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              RF Fuego (12.5mm)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                $
+              </span>
+              <input
+                type="number"
+                value={prices.RF}
+                onChange={(e) =>
+                  setPrices({
+                    ...prices,
+                    RF: Number(e.target.value),
+                  })
+                }
+                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-700 focus:border-red-700"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              ACU Acústica (10mm)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                $
+              </span>
+              <input
+                type="number"
+                value={prices.ACU}
+                onChange={(e) =>
+                  setPrices({
+                    ...prices,
+                    ACU: Number(e.target.value),
+                  })
+                }
+                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-800 focus:border-purple-800"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header con totales generales */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
         <div className="flex flex-col gap-4">
@@ -379,6 +526,9 @@ export default function VolcanitaTab({
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           {VOLCANITA_TYPES.map((type) => {
             const total = typeTotals[type.id];
+            const precio = prices[type.id as keyof typeof prices];
+            const precioTotal = Math.round(total.area * precio);
+
             return (
               <div
                 key={type.id}
@@ -387,9 +537,21 @@ export default function VolcanitaTab({
                 <p className="font-bold text-sm mb-1">{type.name}</p>
                 <p className="text-xs opacity-80 mb-3">{type.thickness}</p>
                 <div className="space-y-1 text-xs">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between pb-1 border-b border-white/20">
                     <span className="opacity-80">Total:</span>
                     <span className="font-bold">{total.boards} un.</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="opacity-80">Área:</span>
+                    <span className="font-medium">
+                      {total.area.toFixed(2)} m²
+                    </span>
+                  </div>
+                  <div className="flex justify-between pb-1 border-b border-white/20">
+                    <span className="opacity-80">Precio:</span>
+                    <span className="font-bold">
+                      ${precioTotal.toLocaleString("es-CL")}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="opacity-80">Piso 1:</span>
@@ -399,15 +561,85 @@ export default function VolcanitaTab({
                     <span className="opacity-80">Piso 2:</span>
                     <span className="font-medium">{total.floor2} un.</span>
                   </div>
-                  <div className="pt-1 border-t border-white/20">
-                    <span className="opacity-80">
-                      {total.area.toFixed(2)} m²
-                    </span>
-                  </div>
                 </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Resumen General Total */}
+        <div className="mt-6 bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6 rounded-lg shadow-lg">
+          <h4 className="text-lg font-bold mb-4">💰 Resumen General</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {VOLCANITA_TYPES.map((type) => {
+              const total = typeTotals[type.id];
+              const precio = prices[type.id as keyof typeof prices];
+              const precioTotal = Math.round(total.area * precio);
+
+              if (total.boards === 0) return null;
+
+              return (
+                <div
+                  key={type.id}
+                  className="bg-white/10 rounded-lg p-4 backdrop-blur-sm"
+                >
+                  <p className="text-sm opacity-90 mb-1">{type.name}</p>
+                  <p className="text-xs opacity-75 mb-2">({type.thickness})</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="opacity-80">Planchas:</span>
+                      <span className="font-semibold">{total.boards} un.</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="opacity-80">Área:</span>
+                      <span className="font-semibold">
+                        {total.area.toFixed(2)} m²
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="opacity-80">Precio/m²:</span>
+                      <span className="font-semibold">
+                        ${precio.toLocaleString("es-CL")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-white/20">
+                      <span className="font-semibold text-xs">Subtotal:</span>
+                      <span className="font-bold text-sm">
+                        ${precioTotal.toLocaleString("es-CL")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Total General */}
+          <div className="mt-6 pt-4 border-t-2 border-white/30">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xl font-bold">TOTAL GENERAL</p>
+                <p className="text-sm opacity-80">
+                  Planchas: {floorTotals.total.boards} un. | Área total:{" "}
+                  {floorTotals.total.area.toFixed(2)} m²
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold">
+                  $
+                  {Math.round(
+                    VOLCANITA_TYPES.reduce((sum, type) => {
+                      return (
+                        sum +
+                        typeTotals[type.id].area *
+                          prices[type.id as keyof typeof prices]
+                      );
+                    }, 0),
+                  ).toLocaleString("es-CL")}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

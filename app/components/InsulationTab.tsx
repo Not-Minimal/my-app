@@ -89,6 +89,13 @@ export default function InsulationTab({
   const [copiedSimple, setCopiedSimple] = useState(false);
   const [copiedDetailed, setCopiedDetailed] = useState(false);
 
+  // Estados para precios editables
+  const [prices, setPrices] = useState({
+    muro_exterior: 2964,
+    cielo_techumbre: 6250,
+    tabique_interior: 1482,
+  });
+
   const calculateArea = (row: InsulationCalculation) => {
     const isCeiling = row.tipoSuperficie.toLowerCase() === "cielo";
 
@@ -212,11 +219,12 @@ export default function InsulationTab({
 
     types.forEach((type) => {
       const total = typeTotals[type.id];
-      const precioTotal = total.area * type.precioM2;
+      const precio = prices[type.id as keyof typeof prices];
+      const precioTotal = Math.round(total.area * precio);
       totalGeneral += precioTotal;
 
       text += `${type.name} (${type.espesorMinimo})\n`;
-      text += `  → ${total.area.toFixed(2)} m² × $${type.precioM2.toLocaleString("es-CL")}/m²\n`;
+      text += `  → ${total.area.toFixed(2)} m² × $${precio.toLocaleString("es-CL")}/m²\n`;
       text += `  → Subtotal: $${precioTotal.toLocaleString("es-CL")}\n\n`;
     });
 
@@ -247,14 +255,15 @@ export default function InsulationTab({
     let totalGeneral = 0;
     types.forEach((type) => {
       const total = typeTotals[type.id];
-      const precioTotal = total.area * type.precioM2;
+      const precio = prices[type.id as keyof typeof prices];
+      const precioTotal = Math.round(total.area * precio);
       totalGeneral += precioTotal;
 
       text += `${type.name}\n`;
       text += `  Espesor: ${type.espesorMinimo}\n`;
       text += `  Valores técnicos: ${type.valor1} / ${type.valor2}\n`;
       text += `  Total: ${total.area.toFixed(2)} m²\n`;
-      text += `  Precio: $${type.precioM2.toLocaleString("es-CL")}/m²\n`;
+      text += `  Precio: $${precio.toLocaleString("es-CL")}/m²\n`;
       text += `  Subtotal: $${precioTotal.toLocaleString("es-CL")}\n`;
       text += `    - Piso 1: ${total.floor1Area.toFixed(2)} m²\n`;
       text += `    - Piso 2: ${total.floor2Area.toFixed(2)} m²\n\n`;
@@ -303,6 +312,78 @@ export default function InsulationTab({
 
   return (
     <div className="space-y-6">
+      {/* Configuración de Precios */}
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
+        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+          💰 Configuración de Precios por m²
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Tabique Interior (40mm)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                $
+              </span>
+              <input
+                type="number"
+                value={prices.tabique_interior}
+                onChange={(e) =>
+                  setPrices({
+                    ...prices,
+                    tabique_interior: Number(e.target.value),
+                  })
+                }
+                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Muro Exterior (70mm)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                $
+              </span>
+              <input
+                type="number"
+                value={prices.muro_exterior}
+                onChange={(e) =>
+                  setPrices({
+                    ...prices,
+                    muro_exterior: Number(e.target.value),
+                  })
+                }
+                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Cielo - Techumbre (140mm)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                $
+              </span>
+              <input
+                type="number"
+                value={prices.cielo_techumbre}
+                onChange={(e) =>
+                  setPrices({
+                    ...prices,
+                    cielo_techumbre: Number(e.target.value),
+                  })
+                }
+                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header con totales generales */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
         <div className="flex flex-col gap-4">
@@ -439,7 +520,10 @@ export default function InsulationTab({
                     <span className="opacity-90">Precio Total:</span>
                     <div className="text-right">
                       <div className="font-bold text-lg">
-                        ${(total.area * type.precioM2).toLocaleString("es-CL")}
+                        $
+                        {Math.round(
+                          total.area * prices[type.id as keyof typeof prices],
+                        ).toLocaleString("es-CL")}
                       </div>
                     </div>
                   </div>
@@ -471,7 +555,8 @@ export default function InsulationTab({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {INSULATION_TYPES.map((type) => {
               const total = typeTotals[type.id];
-              const precioTotal = total.area * type.precioM2;
+              const precio = prices[type.id as keyof typeof prices];
+              const precioTotal = Math.round(total.area * precio);
 
               if (total.area === 0) return null;
 
@@ -494,7 +579,7 @@ export default function InsulationTab({
                     <div className="flex justify-between text-sm">
                       <span className="opacity-80">Precio/m²:</span>
                       <span className="font-semibold">
-                        ${type.precioM2.toLocaleString("es-CL")}
+                        ${precio.toLocaleString("es-CL")}
                       </span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-white/20">
@@ -526,9 +611,15 @@ export default function InsulationTab({
               <div className="text-right">
                 <p className="text-3xl font-bold">
                   $
-                  {INSULATION_TYPES.reduce((sum, type) => {
-                    return sum + typeTotals[type.id].area * type.precioM2;
-                  }, 0).toLocaleString("es-CL")}
+                  {Math.round(
+                    INSULATION_TYPES.reduce((sum, type) => {
+                      return (
+                        sum +
+                        typeTotals[type.id].area *
+                          prices[type.id as keyof typeof prices]
+                      );
+                    }, 0),
+                  ).toLocaleString("es-CL")}
                 </p>
               </div>
             </div>
