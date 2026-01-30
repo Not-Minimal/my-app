@@ -39,6 +39,7 @@ const INSULATION_TYPES = [
     valor2: "R100",
     color: "bg-red-600",
     description: "Aislación para muros exteriores",
+    precioM2: 2964,
   },
   {
     id: "cielo_techumbre",
@@ -48,6 +49,7 @@ const INSULATION_TYPES = [
     valor2: "R100",
     color: "bg-blue-600",
     description: "Aislación para cielos y techumbres",
+    precioM2: 6250,
   },
   {
     id: "tabique_interior",
@@ -57,6 +59,7 @@ const INSULATION_TYPES = [
     valor2: "R100",
     color: "bg-green-600",
     description: "Aislación para tabiques interiores",
+    precioM2: 1482,
   },
 ];
 
@@ -205,14 +208,21 @@ export default function InsulationTab({
     let text = "🧊 PEDIDO DE AISLACIÓN - LANA DE VIDRIO\n";
     text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
 
+    let totalGeneral = 0;
+
     types.forEach((type) => {
       const total = typeTotals[type.id];
+      const precioTotal = total.area * type.precioM2;
+      totalGeneral += precioTotal;
+
       text += `${type.name} (${type.espesorMinimo})\n`;
-      text += `  → ${total.area.toFixed(2)} m²\n\n`;
+      text += `  → ${total.area.toFixed(2)} m² × $${type.precioM2.toLocaleString("es-CL")}/m²\n`;
+      text += `  → Subtotal: $${precioTotal.toLocaleString("es-CL")}\n\n`;
     });
 
     text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    text += `TOTAL: ${floorTotals.total.area.toFixed(2)} m²`;
+    text += `TOTAL ÁREA: ${floorTotals.total.area.toFixed(2)} m²\n`;
+    text += `TOTAL PRECIO: $${totalGeneral.toLocaleString("es-CL")}`;
 
     await navigator.clipboard.writeText(text);
     setCopiedSimple(true);
@@ -232,14 +242,20 @@ export default function InsulationTab({
     text += `  • Segundo Piso: ${floorTotals.floor2.area.toFixed(2)} m²\n\n`;
 
     text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    text += "📦 DETALLE POR TIPO:\n\n";
+    text += "📦 PEDIDO POR TIPO:\n\n";
 
+    let totalGeneral = 0;
     types.forEach((type) => {
       const total = typeTotals[type.id];
+      const precioTotal = total.area * type.precioM2;
+      totalGeneral += precioTotal;
+
       text += `${type.name}\n`;
       text += `  Espesor: ${type.espesorMinimo}\n`;
       text += `  Valores técnicos: ${type.valor1} / ${type.valor2}\n`;
       text += `  Total: ${total.area.toFixed(2)} m²\n`;
+      text += `  Precio: $${type.precioM2.toLocaleString("es-CL")}/m²\n`;
+      text += `  Subtotal: $${precioTotal.toLocaleString("es-CL")}\n`;
       text += `    - Piso 1: ${total.floor1Area.toFixed(2)} m²\n`;
       text += `    - Piso 2: ${total.floor2Area.toFixed(2)} m²\n\n`;
     });
@@ -275,8 +291,10 @@ export default function InsulationTab({
       text += "\n";
     });
 
-    text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    text += `TOTAL GENERAL: ${floorTotals.total.area.toFixed(2)} m²`;
+    text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    text += "💰 RESUMEN FINANCIERO:\n";
+    text += `  TOTAL ÁREA: ${floorTotals.total.area.toFixed(2)} m²\n`;
+    text += `  TOTAL PRECIO: $${totalGeneral.toLocaleString("es-CL")}`;
 
     await navigator.clipboard.writeText(text);
     setCopiedDetailed(true);
@@ -417,6 +435,14 @@ export default function InsulationTab({
                       </div>
                     </div>
                   </div>
+                  <div className="flex justify-between items-center pb-2 border-b border-white/20">
+                    <span className="opacity-90">Precio Total:</span>
+                    <div className="text-right">
+                      <div className="font-bold text-lg">
+                        ${(total.area * type.precioM2).toLocaleString("es-CL")}
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex justify-between">
                     <span className="opacity-80">Piso 1:</span>
                     <div className="text-right">
@@ -437,6 +463,76 @@ export default function InsulationTab({
               </div>
             );
           })}
+        </div>
+
+        {/* Resumen General Total */}
+        <div className="mt-6 bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6 rounded-lg shadow-lg">
+          <h4 className="text-lg font-bold mb-4">💰 Resumen General</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {INSULATION_TYPES.map((type) => {
+              const total = typeTotals[type.id];
+              const precioTotal = total.area * type.precioM2;
+
+              if (total.area === 0) return null;
+
+              return (
+                <div
+                  key={type.id}
+                  className="bg-white/10 rounded-lg p-4 backdrop-blur-sm"
+                >
+                  <p className="text-sm opacity-90 mb-1">{type.name}</p>
+                  <p className="text-xs opacity-75 mb-2">
+                    ({type.espesorMinimo})
+                  </p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="opacity-80">Área:</span>
+                      <span className="font-semibold">
+                        {total.area.toFixed(2)} m²
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="opacity-80">Precio/m²:</span>
+                      <span className="font-semibold">
+                        ${type.precioM2.toLocaleString("es-CL")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-white/20">
+                      <span className="font-semibold">Subtotal:</span>
+                      <span className="font-bold text-lg">
+                        ${precioTotal.toLocaleString("es-CL")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Total General */}
+          <div className="mt-6 pt-4 border-t-2 border-white/30">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xl font-bold">TOTAL GENERAL</p>
+                <p className="text-sm opacity-80">
+                  Área total:{" "}
+                  {INSULATION_TYPES.reduce(
+                    (sum, type) => sum + typeTotals[type.id].area,
+                    0,
+                  ).toFixed(2)}{" "}
+                  m²
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold">
+                  $
+                  {INSULATION_TYPES.reduce((sum, type) => {
+                    return sum + typeTotals[type.id].area * type.precioM2;
+                  }, 0).toLocaleString("es-CL")}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
