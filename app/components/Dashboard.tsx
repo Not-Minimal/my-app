@@ -35,12 +35,14 @@ import {
   Search,
   Loader2,
   Calculator,
+  Thermometer,
 } from "lucide-react";
 
 import {
   type Item as DBItem,
   type Expense as DBExpense,
   type VolcanitaCalculation,
+  type InsulationCalculation,
 } from "@/app/db/schema";
 
 import {
@@ -57,6 +59,7 @@ import {
 } from "@/app/actions/expenses";
 
 import VolcanitaTab from "./VolcanitaTab";
+import InsulationTab from "./InsulationTab";
 
 import {
   type Room,
@@ -147,12 +150,14 @@ interface DashboardProps {
   initialItems: DBItem[];
   initialExpenses: DBExpense[];
   initialVolcanitaCalculations: VolcanitaCalculation[];
+  initialInsulationCalculations: InsulationCalculation[];
 }
 
 export default function Dashboard({
   initialItems,
   initialExpenses,
   initialVolcanitaCalculations,
+  initialInsulationCalculations,
 }: DashboardProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -162,7 +167,7 @@ export default function Dashboard({
 
   // Estados de UI
   const [activeTab, setActiveTab] = useState<
-    "overview" | "expenses" | "items" | "rooms" | "volcanita"
+    "overview" | "expenses" | "items" | "rooms" | "volcanita" | "aislacion"
   >("overview");
 
   // Filtros para gastos
@@ -489,7 +494,16 @@ export default function Dashboard({
             { id: "items", label: "Catálogo", icon: <Package size={16} /> },
             { id: "expenses", label: "Gastos", icon: <Receipt size={16} /> },
             { id: "rooms", label: "Ambientes", icon: <Home size={16} /> },
-            { id: "volcanita", label: "Volcanita", icon: <Calculator size={16} /> },
+            {
+              id: "volcanita",
+              label: "Volcanita",
+              icon: <Calculator size={16} />,
+            },
+            {
+              id: "aislacion",
+              label: "Aislación",
+              icon: <Thermometer size={16} />,
+            },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -2241,6 +2255,11 @@ export default function Dashboard({
         {/* ==================== TAB: VOLCANITA ==================== */}
         {activeTab === "volcanita" && (
           <VolcanitaTab initialCalculations={initialVolcanitaCalculations} />
+        )}
+
+        {/* ==================== TAB: AISLACIÓN ==================== */}
+        {activeTab === "aislacion" && (
+          <InsulationTab initialCalculations={initialInsulationCalculations} />
         )}
 
         {/* Footer */}

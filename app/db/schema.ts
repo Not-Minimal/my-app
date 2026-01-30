@@ -66,3 +66,27 @@ export const volcanitaCalculations = pgTable("volcanita_calculations", {
 
 export type VolcanitaCalculation = typeof volcanitaCalculations.$inferSelect;
 export type NewVolcanitaCalculation = typeof volcanitaCalculations.$inferInsert;
+
+// Tabla de Insulation Calculations (Cubicación de Aislación)
+export const insulationCalculations = pgTable("insulation_calculations", {
+  id: serial("id").primaryKey(),
+  room: text("room").notNull().default("general"), // cocina, living, comedor, bano, pieza-grande, etc.
+  tipoEstructura: text("tipo_estructura").notNull(), // muro_exterior, cielo_techumbre, tabique_interior
+  tipoSuperficie: text("tipo_superficie").notNull(), // Pared o Cielo
+  orientacion: text("orientacion").notNull().default("Norte"), // Norte, Sur, Este, Oeste, Cielo
+  floor: integer("floor").notNull().default(1), // 1 = Piso 1, 2 = Piso 2
+  ancho: real("ancho").notNull().default(0), // Para muros: ancho; para cielos: ancho
+  alto: real("alto").notNull().default(0), // Para muros: alto; para cielos puede ser 0
+  largo: real("largo").notNull().default(0), // Para cielos: largo (permite cálculos de superficie)
+  anchoPuerta: real("ancho_puerta").notNull().default(0),
+  altoPuerta: real("alto_puerta").notNull().default(0),
+  anchoVentana: real("ancho_ventana").notNull().default(0),
+  altoVentana: real("alto_ventana").notNull().default(0),
+  area: real("area").notNull().default(0), // Área neta en m² para cubicación
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type InsulationCalculation = typeof insulationCalculations.$inferSelect;
+export type NewInsulationCalculation =
+  typeof insulationCalculations.$inferInsert;

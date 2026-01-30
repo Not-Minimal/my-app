@@ -15,6 +15,27 @@
       "when": 1769386889186,
       "tag": "0001_stormy_alex_wilder",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769737041871,
+      "tag": "0002_daffy_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1769737567568,
+      "tag": "0003_busy_power_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1769737789642,
+      "tag": "0004_tough_starfox",
+      "breakpoints": true
     }
   ]
 }

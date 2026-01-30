@@ -1,7 +1,17 @@
 "use client";
 
 import React, { useState, useTransition, useMemo } from "react";
-import { Plus, Trash2, Calculator, Info, Loader2, Layers, Copy, Check, FileText } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Calculator,
+  Info,
+  Loader2,
+  Layers,
+  Copy,
+  Check,
+  FileText,
+} from "lucide-react";
 import type { VolcanitaCalculation } from "@/app/db/schema";
 import {
   createVolcanitaCalculation,
@@ -10,11 +20,41 @@ import {
 } from "@/app/actions/volcanita";
 
 const VOLCANITA_TYPES = [
-  { id: "ST_CIELO", name: "ST (Cielo)", thickness: "8mm / 10mm", color: "bg-blue-400", usage: "Cielo" },
-  { id: "ST_TABIQUE", name: "ST (Tabique)", thickness: "15mm", color: "bg-blue-900", usage: "Tabique" },
-  { id: "RH", name: "RH (Humedad)", thickness: "12.5mm", color: "bg-emerald-800", usage: "Baño y Cocina" },
-  { id: "RF", name: "RF (Fuego)", thickness: "12.5mm", color: "bg-red-700", usage: "Muro Cortafuego" },
-  { id: "ACU", name: "ACU (Acústica)", thickness: "10mm", color: "bg-purple-800", usage: "Reducción de Ruido" },
+  {
+    id: "ST_CIELO",
+    name: "ST (Cielo)",
+    thickness: "8mm / 10mm",
+    color: "bg-blue-400",
+    usage: "Cielo",
+  },
+  {
+    id: "ST_TABIQUE",
+    name: "ST (Tabique)",
+    thickness: "15mm",
+    color: "bg-blue-900",
+    usage: "Tabique",
+  },
+  {
+    id: "RH",
+    name: "RH (Humedad)",
+    thickness: "12.5mm",
+    color: "bg-emerald-800",
+    usage: "Baño y Cocina",
+  },
+  {
+    id: "RF",
+    name: "RF (Fuego)",
+    thickness: "12.5mm",
+    color: "bg-red-700",
+    usage: "Muro Cortafuego",
+  },
+  {
+    id: "ACU",
+    name: "ACU (Acústica)",
+    thickness: "10mm",
+    color: "bg-purple-800",
+    usage: "Reducción de Ruido",
+  },
 ];
 
 const BOARD_AREA = 1.2 * 2.4; // 2.88 m²
@@ -23,8 +63,11 @@ interface VolcanitaTabProps {
   initialCalculations: VolcanitaCalculation[];
 }
 
-export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps) {
-  const [calculations, setCalculations] = useState<VolcanitaCalculation[]>(initialCalculations);
+export default function VolcanitaTab({
+  initialCalculations,
+}: VolcanitaTabProps) {
+  const [calculations, setCalculations] =
+    useState<VolcanitaCalculation[]>(initialCalculations);
   const [isPending, startTransition] = useTransition();
   const [copiedSimple, setCopiedSimple] = useState(false);
   const [copiedDetailed, setCopiedDetailed] = useState(false);
@@ -48,7 +91,7 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
           acc.boards += Math.ceil(area / BOARD_AREA);
           return acc;
         },
-        { area: 0, boards: 0 }
+        { area: 0, boards: 0 },
       );
     };
 
@@ -61,7 +104,10 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
 
   // Calcular totales por tipo de volcanita
   const typeTotals = useMemo(() => {
-    const totals: Record<string, { area: number; boards: number; floor1: number; floor2: number }> = {};
+    const totals: Record<
+      string,
+      { area: number; boards: number; floor1: number; floor2: number }
+    > = {};
 
     VOLCANITA_TYPES.forEach((type) => {
       totals[type.id] = { area: 0, boards: 0, floor1: 0, floor2: 0 };
@@ -111,29 +157,32 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
   const updateRow = (id: number, field: string, value: string | number) => {
     // Update UI optimistically
     const updatedCalcs = calculations.map((row) =>
-      row.id === id ? { ...row, [field]: value } : row
+      row.id === id ? { ...row, [field]: value } : row,
     );
     setCalculations(updatedCalcs);
 
     // Update DB
     startTransition(async () => {
-      await updateVolcanitaCalculation(id, { [field]: value } as any);
+      const updateData: Record<string, string | number> = { [field]: value };
+      await updateVolcanitaCalculation(id, updateData);
     });
   };
 
   // Función para copiar resumen simple
   const copySimpleSummary = async () => {
-    const types = VOLCANITA_TYPES.filter((type) => typeTotals[type.id].boards > 0);
-    
+    const types = VOLCANITA_TYPES.filter(
+      (type) => typeTotals[type.id].boards > 0,
+    );
+
     let text = "📋 PEDIDO DE VOLCANITA\n";
     text += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    
+
     types.forEach((type) => {
       const total = typeTotals[type.id];
       text += `${type.name} (${type.thickness})\n`;
       text += `  → ${total.boards} planchas\n\n`;
     });
-    
+
     text += "━━━━━━━━━━━━━━━━━━━━━━\n";
     text += `TOTAL: ${floorTotals.total.boards} planchas\n`;
     text += `Área total: ${floorTotals.total.area.toFixed(2)} m²`;
@@ -145,18 +194,20 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
 
   // Función para copiar resumen detallado
   const copyDetailedSummary = async () => {
-    const types = VOLCANITA_TYPES.filter((type) => typeTotals[type.id].boards > 0);
-    
+    const types = VOLCANITA_TYPES.filter(
+      (type) => typeTotals[type.id].boards > 0,
+    );
+
     let text = "📋 PEDIDO DE VOLCANITA - DETALLADO\n";
     text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    
+
     text += "📊 RESUMEN POR PISO:\n";
     text += `  • Primer Piso: ${floorTotals.floor1.boards} planchas (${floorTotals.floor1.area.toFixed(2)} m²)\n`;
     text += `  • Segundo Piso: ${floorTotals.floor2.boards} planchas (${floorTotals.floor2.area.toFixed(2)} m²)\n\n`;
-    
+
     text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
     text += "📦 DETALLE POR TIPO:\n\n";
-    
+
     types.forEach((type) => {
       const total = typeTotals[type.id];
       text += `${type.name}\n`;
@@ -166,19 +217,19 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
       text += `    - Piso 1: ${total.floor1} planchas\n`;
       text += `    - Piso 2: ${total.floor2} planchas\n\n`;
     });
-    
+
     text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
     text += "📍 RESUMEN DE ÁREAS:\n";
-    
+
     calculations.forEach((calc) => {
       const area = calculateArea(calc);
       const boards = Math.ceil(area / BOARD_AREA);
       const type = VOLCANITA_TYPES.find((t) => t.id === calc.tipoVolcanita);
-      text += `  • ${calc.habitacion || 'Sin nombre'} (Piso ${calc.floor})\n`;
+      text += `  • ${calc.habitacion || "Sin nombre"} (Piso ${calc.floor})\n`;
       text += `    ${calc.tipoSuperficie} ${calc.orientacion} - ${type?.name}\n`;
       text += `    ${calc.ancho}m × ${calc.alto}m = ${area.toFixed(2)} m² → ${boards} planchas\n\n`;
     });
-    
+
     text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
     text += `TOTAL GENERAL: ${floorTotals.total.boards} planchas\n`;
     text += `Área total cubierta: ${floorTotals.total.area.toFixed(2)} m²\n`;
@@ -201,10 +252,11 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                 Cubicación de Volcanita
               </h2>
               <p className="text-slate-500 text-sm">
-                Cálculo de materiales basado en planchas de 1.2m x 2.4m (2.88 m²)
+                Cálculo de materiales basado en planchas de 1.2m x 2.4m (2.88
+                m²)
               </p>
             </div>
-            
+
             {/* Botones de copiar */}
             <div className="flex gap-2">
               <button
@@ -248,16 +300,22 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
             <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
               <div className="flex items-center gap-2 mb-2">
                 <Layers size={18} className="text-blue-600" />
-                <h3 className="text-sm font-bold text-blue-900 uppercase">Primer Piso</h3>
+                <h3 className="text-sm font-bold text-blue-900 uppercase">
+                  Primer Piso
+                </h3>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-xs text-blue-600">Área</p>
-                  <p className="text-lg font-bold text-blue-900">{floorTotals.floor1.area.toFixed(2)} m²</p>
+                  <p className="text-lg font-bold text-blue-900">
+                    {floorTotals.floor1.area.toFixed(2)} m²
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-blue-600">Planchas</p>
-                  <p className="text-lg font-bold text-blue-900">{floorTotals.floor1.boards} un.</p>
+                  <p className="text-lg font-bold text-blue-900">
+                    {floorTotals.floor1.boards} un.
+                  </p>
                 </div>
               </div>
             </div>
@@ -266,16 +324,22 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
             <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
               <div className="flex items-center gap-2 mb-2">
                 <Layers size={18} className="text-purple-600" />
-                <h3 className="text-sm font-bold text-purple-900 uppercase">Segundo Piso</h3>
+                <h3 className="text-sm font-bold text-purple-900 uppercase">
+                  Segundo Piso
+                </h3>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-xs text-purple-600">Área</p>
-                  <p className="text-lg font-bold text-purple-900">{floorTotals.floor2.area.toFixed(2)} m²</p>
+                  <p className="text-lg font-bold text-purple-900">
+                    {floorTotals.floor2.area.toFixed(2)} m²
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-purple-600">Planchas</p>
-                  <p className="text-lg font-bold text-purple-900">{floorTotals.floor2.boards} un.</p>
+                  <p className="text-lg font-bold text-purple-900">
+                    {floorTotals.floor2.boards} un.
+                  </p>
                 </div>
               </div>
             </div>
@@ -284,16 +348,22 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
             <div className="bg-slate-100 p-4 rounded-lg border-2 border-slate-300">
               <div className="flex items-center gap-2 mb-2">
                 <Calculator size={18} className="text-slate-700" />
-                <h3 className="text-sm font-bold text-slate-800 uppercase">Total General</h3>
+                <h3 className="text-sm font-bold text-slate-800 uppercase">
+                  Total General
+                </h3>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-xs text-slate-600">Área</p>
-                  <p className="text-lg font-bold text-slate-900">{floorTotals.total.area.toFixed(2)} m²</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {floorTotals.total.area.toFixed(2)} m²
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-600">Planchas</p>
-                  <p className="text-lg font-bold text-slate-900">{floorTotals.total.boards} un.</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {floorTotals.total.boards} un.
+                  </p>
                 </div>
               </div>
             </div>
@@ -303,7 +373,9 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
 
       {/* Totales por tipo de volcanita */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Resumen por Tipo de Volcanita</h3>
+        <h3 className="text-lg font-bold text-slate-900 mb-4">
+          Resumen por Tipo de Volcanita
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           {VOLCANITA_TYPES.map((type) => {
             const total = typeTotals[type.id];
@@ -328,7 +400,9 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                     <span className="font-medium">{total.floor2} un.</span>
                   </div>
                   <div className="pt-1 border-t border-white/20">
-                    <span className="opacity-80">{total.area.toFixed(2)} m²</span>
+                    <span className="opacity-80">
+                      {total.area.toFixed(2)} m²
+                    </span>
                   </div>
                 </div>
               </div>
@@ -347,17 +421,27 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                 <th className="p-4 border-b border-slate-700">Habitación</th>
                 <th className="p-4 border-b border-slate-700">Superficie</th>
                 <th className="p-4 border-b border-slate-700">Orientación</th>
-                <th className="p-4 border-b border-slate-700 text-center">Ancho / Largo (m)</th>
-                <th className="p-4 border-b border-slate-700 text-center">Alto / Ancho (m)</th>
+                <th className="p-4 border-b border-slate-700 text-center">
+                  Ancho / Largo (m)
+                </th>
+                <th className="p-4 border-b border-slate-700 text-center">
+                  Alto / Ancho (m)
+                </th>
                 <th className="p-4 border-b border-slate-700 text-center text-blue-300">
                   Ancho Vent.
                 </th>
                 <th className="p-4 border-b border-slate-700 text-center text-blue-300">
                   Alto Vent.
                 </th>
-                <th className="p-4 border-b border-slate-700">Tipo Volcanita</th>
-                <th className="p-4 border-b border-slate-700 text-right">Área Neto</th>
-                <th className="p-4 border-b border-slate-700 text-right">Planchas</th>
+                <th className="p-4 border-b border-slate-700">
+                  Tipo Volcanita
+                </th>
+                <th className="p-4 border-b border-slate-700 text-right">
+                  Área Neto
+                </th>
+                <th className="p-4 border-b border-slate-700 text-right">
+                  Planchas
+                </th>
                 <th className="p-4 border-b border-slate-700 text-center"></th>
               </tr>
             </thead>
@@ -365,7 +449,9 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
               {calculations.map((row) => {
                 const netArea = calculateArea(row);
                 const boardsNeeded = netArea / BOARD_AREA;
-                const selectedType = VOLCANITA_TYPES.find((t) => t.id === row.tipoVolcanita);
+                const selectedType = VOLCANITA_TYPES.find(
+                  (t) => t.id === row.tipoVolcanita,
+                );
 
                 return (
                   <tr
@@ -382,7 +468,9 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                             : "bg-purple-100 text-purple-700"
                         }`}
                         value={row.floor}
-                        onChange={(e) => updateRow(row.id, "floor", parseInt(e.target.value))}
+                        onChange={(e) =>
+                          updateRow(row.id, "floor", parseInt(e.target.value))
+                        }
                       >
                         <option value={1}>Piso 1</option>
                         <option value={2}>Piso 2</option>
@@ -393,7 +481,9 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                         type="text"
                         className="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1"
                         value={row.habitacion}
-                        onChange={(e) => updateRow(row.id, "habitacion", e.target.value)}
+                        onChange={(e) =>
+                          updateRow(row.id, "habitacion", e.target.value)
+                        }
                         placeholder="Ej: Cocina"
                       />
                     </td>
@@ -401,7 +491,9 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                       <select
                         className="bg-transparent outline-none cursor-pointer"
                         value={row.tipoSuperficie}
-                        onChange={(e) => updateRow(row.id, "tipoSuperficie", e.target.value)}
+                        onChange={(e) =>
+                          updateRow(row.id, "tipoSuperficie", e.target.value)
+                        }
                       >
                         <option value="Pared">Pared</option>
                         <option value="Cielo">Cielo</option>
@@ -411,7 +503,9 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                       <select
                         className="bg-transparent outline-none cursor-pointer"
                         value={row.orientacion}
-                        onChange={(e) => updateRow(row.id, "orientacion", e.target.value)}
+                        onChange={(e) =>
+                          updateRow(row.id, "orientacion", e.target.value)
+                        }
                       >
                         <option value="Norte">Norte</option>
                         <option value="Sur">Sur</option>
@@ -426,7 +520,13 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                         step="0.1"
                         className="w-20 text-center border rounded p-1"
                         value={row.ancho}
-                        onChange={(e) => updateRow(row.id, "ancho", parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          updateRow(
+                            row.id,
+                            "ancho",
+                            parseFloat(e.target.value) || 0,
+                          )
+                        }
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -434,12 +534,18 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                         type="number"
                         step="0.1"
                         className={`w-20 text-center border rounded p-1 ${
-                          row.tipoSuperficie === "Pared" ? "bg-slate-50" : "bg-white"
+                          row.tipoSuperficie === "Pared"
+                            ? "bg-slate-50"
+                            : "bg-white"
                         }`}
                         value={row.alto}
                         onChange={(e) =>
                           row.tipoSuperficie === "Cielo" &&
-                          updateRow(row.id, "alto", parseFloat(e.target.value) || 0)
+                          updateRow(
+                            row.id,
+                            "alto",
+                            parseFloat(e.target.value) || 0,
+                          )
                         }
                         readOnly={row.tipoSuperficie === "Pared"}
                       />
@@ -451,7 +557,11 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                         className="w-16 text-center border rounded p-1 border-blue-100"
                         value={row.anchoVentana}
                         onChange={(e) =>
-                          updateRow(row.id, "anchoVentana", parseFloat(e.target.value) || 0)
+                          updateRow(
+                            row.id,
+                            "anchoVentana",
+                            parseFloat(e.target.value) || 0,
+                          )
                         }
                         disabled={row.tipoSuperficie === "Cielo"}
                       />
@@ -463,7 +573,11 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                         className="w-16 text-center border rounded p-1 border-blue-100"
                         value={row.altoVentana}
                         onChange={(e) =>
-                          updateRow(row.id, "altoVentana", parseFloat(e.target.value) || 0)
+                          updateRow(
+                            row.id,
+                            "altoVentana",
+                            parseFloat(e.target.value) || 0,
+                          )
                         }
                         disabled={row.tipoSuperficie === "Cielo"}
                       />
@@ -473,7 +587,9 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                         <select
                           className="bg-transparent text-sm font-medium outline-none"
                           value={row.tipoVolcanita}
-                          onChange={(e) => updateRow(row.id, "tipoVolcanita", e.target.value)}
+                          onChange={(e) =>
+                            updateRow(row.id, "tipoVolcanita", e.target.value)
+                          }
                         >
                           {VOLCANITA_TYPES.map((t) => (
                             <option key={t.id} value={t.id}>
@@ -486,10 +602,14 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
                         </span>
                       </div>
                     </td>
-                    <td className="p-3 text-right font-medium">{netArea.toFixed(2)} m²</td>
+                    <td className="p-3 text-right font-medium">
+                      {netArea.toFixed(2)} m²
+                    </td>
                     <td className="p-3 text-right">
                       <div className="flex flex-col items-end">
-                        <span className="text-blue-600 font-bold">{Math.ceil(boardsNeeded)}</span>
+                        <span className="text-blue-600 font-bold">
+                          {Math.ceil(boardsNeeded)}
+                        </span>
                         <span className="text-[10px] text-slate-400">
                           ({boardsNeeded.toFixed(2)})
                         </span>
@@ -517,14 +637,18 @@ export default function VolcanitaTab({ initialCalculations }: VolcanitaTabProps)
             disabled={isPending}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-sm disabled:opacity-50"
           >
-            {isPending ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+            {isPending ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Plus size={18} />
+            )}
             Añadir Pared o Cielo
           </button>
 
           <div className="text-xs text-slate-500 flex items-center gap-2">
             <Info size={14} />
-            Las filas de Cielo permiten editar ambas dimensiones. Las de Pared fijan el alto en
-            2.4m.
+            Las filas de Cielo permiten editar ambas dimensiones. Las de Pared
+            fijan el alto en 2.4m.
           </div>
         </div>
       </div>
