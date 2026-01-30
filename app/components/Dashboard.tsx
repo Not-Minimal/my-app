@@ -123,6 +123,65 @@ const getRoomTotal = (
     .reduce((sum, e) => sum + getExpenseAmount(e, items), 0);
 };
 
+const getRoomInsulationArea = (
+  insulationCalculations: InsulationCalculation[],
+  room: string,
+): number => {
+  return insulationCalculations
+    .filter((calc) => calc.room === room)
+    .reduce((sum, calc) => sum + calc.area, 0);
+};
+
+const getRoomVolcanitaArea = (
+  volcanitaCalculations: VolcanitaCalculation[],
+  room: string,
+): number => {
+  // Obtener el nombre del ambiente para comparación flexible
+  const roomName = roomsConfig[room as Room]?.name || room;
+
+  return volcanitaCalculations
+    .filter((calc) => {
+      const habitacion = calc.habitacion.toLowerCase().trim();
+      const roomCode = room.toLowerCase().trim();
+      const roomDisplayName = roomName.toLowerCase().trim();
+
+      // Soportar tanto el código (ej: "cocina") como el nombre (ej: "Cocina")
+      // También texto libre que contenga palabras clave
+      return (
+        habitacion === roomCode ||
+        habitacion === roomDisplayName ||
+        habitacion.includes(roomCode) ||
+        roomDisplayName.includes(habitacion)
+      );
+    })
+    .reduce((sum, calc) => sum + calc.areaNeto, 0);
+};
+
+const getRoomVolcanitaBoards = (
+  volcanitaCalculations: VolcanitaCalculation[],
+  room: string,
+): number => {
+  // Obtener el nombre del ambiente para comparación flexible
+  const roomName = roomsConfig[room as Room]?.name || room;
+
+  return volcanitaCalculations
+    .filter((calc) => {
+      const habitacion = calc.habitacion.toLowerCase().trim();
+      const roomCode = room.toLowerCase().trim();
+      const roomDisplayName = roomName.toLowerCase().trim();
+
+      // Soportar tanto el código (ej: "cocina") como el nombre (ej: "Cocina")
+      // También texto libre que contenga palabras clave
+      return (
+        habitacion === roomCode ||
+        habitacion === roomDisplayName ||
+        habitacion.includes(roomCode) ||
+        roomDisplayName.includes(habitacion)
+      );
+    })
+    .reduce((sum, calc) => sum + calc.planchasRequeridas, 0);
+};
+
 const getCategoryTotal = (
   expenses: DBExpense[],
   items: DBItem[],
@@ -1297,6 +1356,18 @@ export default function Dashboard({
                       (e) => e.room === room,
                     );
                     const total = getRoomTotal(expenses, items, room);
+                    const insulationArea = getRoomInsulationArea(
+                      initialInsulationCalculations,
+                      room,
+                    );
+                    const volcanitaArea = getRoomVolcanitaArea(
+                      initialVolcanitaCalculations,
+                      room,
+                    );
+                    const volcanitaBoards = getRoomVolcanitaBoards(
+                      initialVolcanitaCalculations,
+                      room,
+                    );
                     return (
                       <div
                         key={room}
@@ -1318,6 +1389,36 @@ export default function Dashboard({
                         <p className="text-2xl font-bold text-slate-800">
                           {formatCurrency(total)}
                         </p>
+
+                        {/* Aislación y Volcanita */}
+                        {(insulationArea > 0 || volcanitaArea > 0) && (
+                          <div className="mt-3 pt-3 border-t border-slate-100">
+                            <p className="text-xs text-slate-500 mb-2 font-medium">
+                              Cubicaciones:
+                            </p>
+                            {insulationArea > 0 && (
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-slate-600">
+                                  🧊 Aislación:
+                                </span>
+                                <span className="text-slate-800 font-medium">
+                                  {insulationArea.toFixed(2)} m²
+                                </span>
+                              </div>
+                            )}
+                            {volcanitaArea > 0 && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-600">
+                                  📋 Volcanita:
+                                </span>
+                                <span className="text-slate-800 font-medium">
+                                  {volcanitaBoards} planchas (
+                                  {volcanitaArea.toFixed(2)} m²)
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Lista de items con cantidades */}
                         {roomExpenses.length > 0 && (
@@ -1396,6 +1497,18 @@ export default function Dashboard({
                       (e) => e.room === room,
                     );
                     const total = getRoomTotal(expenses, items, room);
+                    const insulationArea = getRoomInsulationArea(
+                      initialInsulationCalculations,
+                      room,
+                    );
+                    const volcanitaArea = getRoomVolcanitaArea(
+                      initialVolcanitaCalculations,
+                      room,
+                    );
+                    const volcanitaBoards = getRoomVolcanitaBoards(
+                      initialVolcanitaCalculations,
+                      room,
+                    );
                     return (
                       <div
                         key={room}
@@ -1417,6 +1530,36 @@ export default function Dashboard({
                         <p className="text-2xl font-bold text-slate-800">
                           {formatCurrency(total)}
                         </p>
+
+                        {/* Aislación y Volcanita */}
+                        {(insulationArea > 0 || volcanitaArea > 0) && (
+                          <div className="mt-3 pt-3 border-t border-slate-100">
+                            <p className="text-xs text-slate-500 mb-2 font-medium">
+                              Cubicaciones:
+                            </p>
+                            {insulationArea > 0 && (
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-slate-600">
+                                  🧊 Aislación:
+                                </span>
+                                <span className="text-slate-800 font-medium">
+                                  {insulationArea.toFixed(2)} m²
+                                </span>
+                              </div>
+                            )}
+                            {volcanitaArea > 0 && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-600">
+                                  📋 Volcanita:
+                                </span>
+                                <span className="text-slate-800 font-medium">
+                                  {volcanitaBoards} planchas (
+                                  {volcanitaArea.toFixed(2)} m²)
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Lista de items con cantidades */}
                         {roomExpenses.length > 0 && (

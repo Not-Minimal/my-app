@@ -18,6 +18,7 @@ import {
   updateVolcanitaCalculation,
   deleteVolcanitaCalculation,
 } from "@/app/actions/volcanita";
+import { roomsConfig } from "@/app/data/project-data";
 
 const VOLCANITA_TYPES = [
   {
@@ -147,7 +148,7 @@ export default function VolcanitaTab({
   const addRow = () => {
     startTransition(async () => {
       const newRow = await createVolcanitaCalculation({
-        habitacion: "",
+        habitacion: "general",
         floor: 1,
         tipoSuperficie: "Pared",
         orientacion: "Norte",
@@ -709,15 +710,19 @@ export default function VolcanitaTab({
                       </select>
                     </td>
                     <td className="p-3">
-                      <input
-                        type="text"
-                        className="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1"
+                      <select
+                        className="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-sm"
                         value={row.habitacion}
                         onChange={(e) =>
                           updateRow(row.id, "habitacion", e.target.value)
                         }
-                        placeholder="Ej: Cocina"
-                      />
+                      >
+                        {Object.entries(roomsConfig).map(([key, config]) => (
+                          <option key={key} value={key}>
+                            {config.name}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="p-3">
                       <select
