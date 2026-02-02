@@ -36,6 +36,7 @@ import {
   Loader2,
   Calculator,
   Thermometer,
+  Droplet,
 } from "lucide-react";
 
 import {
@@ -43,6 +44,8 @@ import {
   type Expense as DBExpense,
   type VolcanitaCalculation,
   type InsulationCalculation,
+  type SikaCalculation,
+  type SikaConfig,
 } from "@/app/db/schema";
 
 import {
@@ -60,6 +63,7 @@ import {
 
 import VolcanitaTab from "./VolcanitaTab";
 import InsulationTab from "./InsulationTab";
+import SikaTab from "./SikaTab";
 
 import {
   type Room,
@@ -210,6 +214,9 @@ interface DashboardProps {
   initialExpenses: DBExpense[];
   initialVolcanitaCalculations: VolcanitaCalculation[];
   initialInsulationCalculations: InsulationCalculation[];
+  initialSikaCalculations: SikaCalculation[];
+  initialRadierConfig: SikaConfig;
+  initialZapataConfig: SikaConfig;
 }
 
 export default function Dashboard({
@@ -217,6 +224,9 @@ export default function Dashboard({
   initialExpenses,
   initialVolcanitaCalculations,
   initialInsulationCalculations,
+  initialSikaCalculations,
+  initialRadierConfig,
+  initialZapataConfig,
 }: DashboardProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -226,7 +236,13 @@ export default function Dashboard({
 
   // Estados de UI
   const [activeTab, setActiveTab] = useState<
-    "overview" | "expenses" | "items" | "rooms" | "volcanita" | "aislacion"
+    | "overview"
+    | "expenses"
+    | "items"
+    | "rooms"
+    | "volcanita"
+    | "aislacion"
+    | "sika"
   >("overview");
 
   // Filtros para gastos
@@ -562,6 +578,11 @@ export default function Dashboard({
               id: "aislacion",
               label: "Aislación",
               icon: <Thermometer size={16} />,
+            },
+            {
+              id: "sika",
+              label: "Sika 1",
+              icon: <Droplet size={16} />,
             },
           ].map((tab) => (
             <button
@@ -2403,6 +2424,15 @@ export default function Dashboard({
         {/* ==================== TAB: AISLACIÓN ==================== */}
         {activeTab === "aislacion" && (
           <InsulationTab initialCalculations={initialInsulationCalculations} />
+        )}
+
+        {/* ==================== TAB: SIKA 1 ==================== */}
+        {activeTab === "sika" && (
+          <SikaTab
+            initialCalculations={initialSikaCalculations}
+            initialRadierConfig={initialRadierConfig}
+            initialZapataConfig={initialZapataConfig}
+          />
         )}
 
         {/* Footer */}

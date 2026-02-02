@@ -90,3 +90,38 @@ export const insulationCalculations = pgTable("insulation_calculations", {
 export type InsulationCalculation = typeof insulationCalculations.$inferSelect;
 export type NewInsulationCalculation =
   typeof insulationCalculations.$inferInsert;
+
+// Tabla de Sika Calculations (Cubicación de Radier/Losa y Zapatas)
+export const sikaCalculations = pgTable("sika_calculations", {
+  id: serial("id").primaryKey(),
+  tipo: text("tipo").notNull(), // 'radier' o 'zapata'
+  name: text("name").notNull(), // Nombre descriptivo del elemento
+  qty: integer("qty").notNull().default(1), // Cantidad de elementos
+  length: real("length").notNull().default(0), // Largo en metros
+  width: real("width").notNull().default(0), // Ancho en metros
+  height: real("height").notNull().default(0), // Alto/Espesor en metros
+  volume: real("volume").notNull().default(0), // Volumen calculado en m³
+  area: real("area").notNull().default(0), // Área calculada en m²
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type SikaCalculation = typeof sikaCalculations.$inferSelect;
+export type NewSikaCalculation = typeof sikaCalculations.$inferInsert;
+
+// Tabla de Sika Configuration (Configuración de dosificación)
+export const sikaConfig = pgTable("sika_config", {
+  id: serial("id").primaryKey(),
+  tipo: text("tipo").notNull().unique(), // 'radier' o 'zapata'
+  cement: real("cement").notNull().default(0), // Sacos de cemento por m³
+  sand: real("sand").notNull().default(0), // Unidades de arena por m³
+  gravel: real("gravel").notNull().default(0), // Unidades de grava por m³
+  water: real("water").notNull().default(0), // Litros/unidades de agua por m³
+  sikaDosage: real("sika_dosage").notNull().default(0), // kg de Sika por m²
+  sikaContainer: real("sika_container").notNull().default(18), // kg por bidón
+  waste: real("waste").notNull().default(10), // Porcentaje de desperdicio
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type SikaConfig = typeof sikaConfig.$inferSelect;
+export type NewSikaConfig = typeof sikaConfig.$inferInsert;
