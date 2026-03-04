@@ -90,6 +90,7 @@ export const projectInfo: ProjectInfo = {
 export const contributors: Contributor[] = [
   { id: "jessenia", name: "Jessenia", contribution: 9000000 },
   { id: "saul", name: "Saul", contribution: 3000000 },
+  { id: "daniel", name: "Daniel", contribution: 0 },
 ];
 
 // Mapeo de ambientes
