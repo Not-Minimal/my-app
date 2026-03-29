@@ -170,3 +170,27 @@ export async function deleteExpense(id: number): Promise<void> {
     throw new Error("Error al eliminar el gasto");
   }
 }
+
+// Marcar gastos como exportados
+export async function markExpensesAsExported(
+  expenseIds: number[]
+): Promise<void> {
+  try {
+    if (expenseIds.length === 0) return;
+
+    for (const id of expenseIds) {
+      await db
+        .update(expenses)
+        .set({
+          lastExportedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(expenses.id, id));
+    }
+
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Error marking expenses as exported:", error);
+    throw new Error("Error al marcar los gastos como exportados");
+  }
+}

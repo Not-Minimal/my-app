@@ -43,6 +43,13 @@
       "when": 1770060644461,
       "tag": "0005_striped_lila_cheney",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774747898977,
+      "tag": "0006_fancy_stingray",
+      "breakpoints": true
     }
   ]
 }

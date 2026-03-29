@@ -36,6 +36,7 @@ export const expenses = pgTable("expenses", {
   paid: boolean("paid").notNull().default(false),
   paidBy: text("paid_by"), // jessenia, saul
   notes: text("notes"),
+  lastExportedAt: timestamp("last_exported_at"), // Última vez que se exportó este gasto
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

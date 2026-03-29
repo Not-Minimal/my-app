@@ -1,0 +1,1 @@
+ALTER TABLE "expenses" ADD COLUMN "last_exported_at" timestamp;

@@ -37,6 +37,7 @@ import {
   Calculator,
   Thermometer,
   Droplet,
+  Download,
 } from "lucide-react";
 
 import {
@@ -59,11 +60,13 @@ import {
   updateExpenseQuantity as updateExpenseQuantityAction,
   toggleExpensePaid,
   deleteExpense as deleteExpenseAction,
+  markExpensesAsExported,
 } from "@/app/actions/expenses";
 
 import VolcanitaTab from "./VolcanitaTab";
 import InsulationTab from "./InsulationTab";
 import SikaTab from "./SikaTab";
+import { exportExpensesToExcel } from "@/app/utils/exportToExcel";
 
 import {
   type Room,
@@ -256,6 +259,7 @@ export default function Dashboard({
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showEditItemModal, setShowEditItemModal] = useState(false);
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [editingItem, setEditingItem] = useState<DBItem | null>(null);
 
   // Búsqueda de items
@@ -497,6 +501,70 @@ export default function Dashboard({
       }
     });
   };
+
+  // ============ Export Functionality ============
+
+  const handleExportAll = () => {
+    const expensesToExport = filteredExpenses.map(e => ({
+      ...e,
+      item: items.find(i => i.id === e.itemId)
+    }));
+
+    exportExpensesToExcel(
+      expensesToExport,
+      `gastos_${new Date().toISOString().split('T')[0]}.xlsx`,
+      async (expenseIds) => {
+        try {
+          await markExpensesAsExported(expenseIds);
+          // Actualizar el estado local
+          setExpenses(expenses.map(e => 
+            expenseIds.includes(e.id) 
+              ? { ...e, lastExportedAt: new Date() }
+              : e
+          ));
+        } catch (error) {
+          console.error("Error marking expenses as exported:", error);
+        }
+      }
+    );
+    setShowExportModal(false);
+  };
+
+  const handleExportNew = () => {
+    const newExpenses = filteredExpenses
+      .filter(e => !e.lastExportedAt)
+      .map(e => ({
+        ...e,
+        item: items.find(i => i.id === e.itemId)
+      }));
+
+    if (newExpenses.length === 0) {
+      alert("No hay gastos nuevos para exportar");
+      setShowExportModal(false);
+      return;
+    }
+
+    exportExpensesToExcel(
+      newExpenses,
+      `gastos_nuevos_${new Date().toISOString().split('T')[0]}.xlsx`,
+      async (expenseIds) => {
+        try {
+          await markExpensesAsExported(expenseIds);
+          // Actualizar el estado local
+          setExpenses(expenses.map(e => 
+            expenseIds.includes(e.id) 
+              ? { ...e, lastExportedAt: new Date() }
+              : e
+          ));
+        } catch (error) {
+          console.error("Error marking expenses as exported:", error);
+        }
+      }
+    );
+    setShowExportModal(false);
+  };
+
+  const newExpensesCount = filteredExpenses.filter(e => !e.lastExportedAt).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-3 sm:p-4 md:p-6 lg:p-8 font-sans">
@@ -1129,13 +1197,22 @@ export default function Dashboard({
                     )}
                   </select>
                 </div>
-                <button
-                  onClick={() => setShowAddExpenseModal(true)}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  <Plus size={18} />
-                  Agregar Gasto
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowExportModal(true)}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Download size={18} />
+                    Exportar Excel
+                  </button>
+                  <button
+                    onClick={() => setShowAddExpenseModal(true)}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Plus size={18} />
+                    Agregar Gasto
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2433,6 +2510,79 @@ export default function Dashboard({
             initialRadierConfig={initialRadierConfig}
             initialZapataConfig={initialZapataConfig}
           />
+        )}
+
+        {/* ==================== MODAL: EXPORTAR GASTOS ==================== */}
+        {showExportModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+              <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-800">
+                  Exportar Gastos a Excel
+                </h3>
+                <button
+                  onClick={() => setShowExportModal(false)}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-slate-600">
+                  Selecciona qué gastos deseas exportar:
+                </p>
+
+                {/* Estadísticas */}
+                <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Total de gastos filtrados:</span>
+                    <span className="font-semibold text-slate-800">{filteredExpenses.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Gastos nuevos (no exportados):</span>
+                    <span className="font-semibold text-green-600">{newExpensesCount}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Ya exportados anteriormente:</span>
+                    <span className="font-semibold text-blue-600">{filteredExpenses.length - newExpensesCount}</span>
+                  </div>
+                </div>
+
+                {/* Botones de acción */}
+                <div className="space-y-3">
+                  <button
+                    onClick={handleExportNew}
+                    disabled={newExpensesCount === 0}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                  >
+                    <Download size={18} />
+                    Exportar solo nuevos ({newExpensesCount})
+                  </button>
+
+                  <button
+                    onClick={handleExportAll}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    <Download size={18} />
+                    Exportar todos ({filteredExpenses.length})
+                  </button>
+
+                  <button
+                    onClick={() => setShowExportModal(false)}
+                    className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+
+                <div className="text-xs text-slate-500 bg-blue-50 rounded-lg p-3">
+                  <p className="font-medium text-blue-700 mb-1">Nota:</p>
+                  <p>Los gastos exportados se marcarán automáticamente para evitar duplicados en futuras exportaciones.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Footer */}
